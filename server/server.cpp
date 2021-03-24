@@ -38,3 +38,7 @@ Server::Server(){
         exit(EXIT_FAILURE);
     }
 }
+
+void Server::runServer(){
+    
+}
