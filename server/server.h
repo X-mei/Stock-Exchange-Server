@@ -16,6 +16,7 @@ private:
 public:
     Server();
     void runServer();
+    vector<char> recv_vector();
     ~Server();
 
 };

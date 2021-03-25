@@ -39,6 +39,50 @@ Server::Server(){
     }
 }
 
+vector<char> recv_vector(){
+    vector<char> buff(BUFF_SIZE);
+    int data_len = recv(socket_fd, &(buff.data()[0]), BUFF_SIZE, 0);
+    int index = data_len;
+    int total_len = 0;
+    try {
+        total_len = stoi(string(buff.data()).substr(0, string(buff.data()).find('\n') + 1));
+    } 
+    catch (const exception &e) {
+        return {};
+    }
+
+    cout << "=========================" << endl;
+    cout << "starting receiving" << endl;
+    cout << "data_len: " << data_len << endl;
+    cout << "total_len: " << total_len << endl;
+    if (data_len >= BUFF_SIZE) {
+        while (data_len != 0) {
+            buff.resize(index + 1024);
+            data_len = recv(socket_fd, &(buff.data()[index]), 1024, 0);
+            index += data_len;
+            if (data_len < 1024 && data_len > 0) {
+                buff.resize(index);
+            }
+            if (data_len <= 0 || total_len <= index) {
+                break;
+            }
+            if (string(buff.begin(), buff.end()).find("</create>") != string::npos) {
+                break;
+            }
+        cout << buff.data() << endl;
+        }
+    }
+
+    cout << "done receiving" << endl;
+    // get rid of byte len at the beginning
+    while (isdigit(*buff.begin())) {
+        buff.erase(buff.begin());
+    }
+    buff.erase(buff.begin());
+    return buff;
+    }
+}
+
 void Server::runServer(){
     
 }
