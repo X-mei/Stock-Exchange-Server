@@ -12,6 +12,15 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
-#include <signal.h>
+//#include <signal.h>
+
+#include <ctime>
+#include <fstream>
+#include <iostream>
+#include <pqxx/pqxx>
+#include <vector>
+#include <mutex>
+
+using namespace std;
 
 #endif
