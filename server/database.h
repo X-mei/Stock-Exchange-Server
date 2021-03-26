@@ -17,10 +17,12 @@ public:
     bool createAccount(string accountId, float balance);    //false for account exist, true for create new account
     //false if position is invalid, true of position is created or updated
     bool createPosition(string symName, string accountId, float amount);
-    bool createOrder(string symName, string accountId, float amount, float price);
-
-
+    bool createOrder(string symName, string accountId, float amount, float limit);
+    bool cancel(string accountId, string transId, vector<CancelOrder> &cancelOpenSet, vector<ExecutedOrder> &cancelExecutedSet);
+    bool query(string accountId, string transId, vector<OpenOrder> &queryOpenSet, vector<CancelOrder> &queryCancelSet, vector<ExecutedOrder> &queryExecutedSet);
+    bool checkAccountValid(string accountId);
+    bool checkBalance(string accountId, float amount, float limits);
+    bool checkAmount(string accountId, float amount, string symName);
 };
-
 
 #endif
