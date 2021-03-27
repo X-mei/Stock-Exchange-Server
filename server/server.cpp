@@ -83,6 +83,22 @@ vector<char> recv_vector(){
     }
 }
 
+void send_back(int &client_fd, string &response) {
+  cout << "start sending back" << endl;
+  size_t sent = 0;
+  vector<char> res(response.begin(), response.end());
+  while (1) {
+    if (sent + 1024 < res.size()) {
+      sent += send(client_fd, &(res.data()[sent]), 1024, 0);
+    } else {
+      sent += send(client_fd, &(res.data()[sent]), res.size() - sent, 0);
+      break;
+    }
+  }
+  cout << "done sending back" << endl;
+  return;
+}
+
 void Server::runServer(){
     
 }
