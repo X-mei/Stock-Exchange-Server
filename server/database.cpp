@@ -163,7 +163,7 @@ bool Database::createPosition(string symName, string accountId, float amount){
         pqxx::result::const_iterator c2 = R2.begin();
         //if position does not exist, create a position, return true 
         if( c2 == R2.end()){
-            cout << " in not exist "  << endl;
+            //cout << " in not exist "  << endl;
             string create_pos_sql = "INSERT INTO POSITIONS (ACCOUNT_ID, SYM, AMOUNT) "		\
 	                                "VALUES (" + accountId + ", '" + symName + "', " + to_string(amount) + ");";
             N2.commit();
@@ -180,7 +180,6 @@ bool Database::createPosition(string symName, string accountId, float amount){
             string update_pos_sql = "UPDATE POSITIONS set AMOUNT=AMOUNT+" + to_string(amount) + " WHERE ACCOUNT_ID=" + accountId + " AND SYM='" + symName + "';";
             N2.commit();
             pqxx::work W(*C);
-            
             W.exec(update_pos_sql);
             W.commit();
             cout << " update a position" << endl;
@@ -205,14 +204,15 @@ int Database::createOrder(string symName, string accountId, float amount, float 
         pqxx::nontransaction N(*C);
         string get_trans_id_sql = "SELECT id FROM ORDER_OPEN "\
                                 "WHERE TIME=" +\
-                                to_string(currTime) + " AND ACCOUNT_ID = " + accountId + "AND SYM = " + symName + \
-                                "AND AMOUNT = " + to_string(amount) + "AND LIMITS = " + to_string(limit) + ";";
+                                to_string(currTime) + " AND ACCOUNT_ID = " + accountId + "AND SYM = '" + symName + \
+                                "' AND AMOUNT = " + to_string(amount) + "AND LIMITS = " + to_string(limit) + ";";
 
         pqxx::result R( N.exec(get_trans_id_sql));
         N.commit();
         pqxx::result::const_iterator c = R.begin();
         int trans_id = c[0].as<int>();
         cout << " create open order No." << trans_id << endl;
+        executeOrder(accountId, to_string(trans_id), symName, amount, limit, currTime);
         return trans_id;
     }
     catch (const std::exception &e) {
@@ -223,52 +223,143 @@ int Database::createOrder(string symName, string accountId, float amount, float 
 
 bool Database::executeOrder(string accountId, string transId, string symName, float amount, float limit, time_t orderTime){
     try{
-        //for buy amount > 0
-        if(amount > 0){
-            string find_match_sell_sql = "SELECT id, ACCOUNT_ID, AMOUNT, LIMITS TIME from ORDER_OPEN WHERE "\
+        if(amount > 0){//for buy, amount > 0
+            cout << "in execute buy order" << endl;
+            string find_match_sell_sql = "SELECT id, ACCOUNT_ID, AMOUNT, LIMITS, TIME from ORDER_OPEN WHERE "\
                                     "AMOUNT<0 AND LIMITS<=" + to_string(limit) + " AND SYM='" + symName + "' AND ACCOUNT_ID!=" + accountId  + " ORDER BY LIMITS ASC, TIME ASC;";
             pqxx::nontransaction N1(*C);
             pqxx::result R1(N1.exec(find_match_sell_sql));
             N1.commit();
             float restBuyAmount = amount;
-            bool buyMarker = true;
-            while(buyMarker){
-                for(pqxx::result::const_iterator c = R1.begin(); c != R1.end(); ++c){
-                    string sellId = c[0].as<string>();
-                    string sellerAccountId = c[1].as<string>();
-                    float sellAmount = c[2].as<float>();
-                    float sellLimit = c[3].as<float>();
-                    time_t sellTime = c[4].as<time_t>();
-                    if(sellTime < orderTime){//use sell limit
-                        if(restBuyAmount + sellAmount > 0){//buy > sell, partial buy
-                            buyMarker = processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, sellAmount, sellLimit);
-                            restBuyAmount += sellAmount;
-                            continue;
-                        }
-                        else if(restBuyAmount + sellAmount < 0){//buy < sell, partial sell, end this buy process
-                            buyMarker = processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, restBuyAmount, sellLimit);
-                            continue;
-                        }
-                        else{//buy amount = sell amount, perfect match
-
-
-                        }
+            //bool buyMarker = true;
+            for(pqxx::result::const_iterator c = R1.begin(); c != R1.end(); ++c){
+                //cout << "in for" << endl;
+                if(restBuyAmount <= 0){ //this buy order is all processed
+                    cout << "this buy order is all processed" << endl;
+                    break;
+                }
+                string sellId = c[0].as<string>();
+                string sellerAccountId = c[1].as<string>();
+                float sellAmount = c[2].as<float>();
+                float sellLimit = c[3].as<float>();
+                time_t sellTime = c[4].as<time_t>();
+                if(sellTime < orderTime){//use sell limit
+                    if(restBuyAmount + sellAmount > 0){//buy > sell, partial buy, delete sell open order, update buy order
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, -sellAmount, sellLimit);//add partial buy in ORDER_EXECUTE
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, sellAmount, sellLimit);//add whole sell in ORDER_EXECUTE
+                        deleteSingleOrder(sellerAccountId, sellId, symName, sellLimit, sellTime);   //delete sell
+                        updateSingleOrder(accountId, transId, symName, sellAmount, limit, orderTime);   //update buy
+                        //restBuyAmount = restBuyAmount + sellAmount;
+                        //continue;
                     }
-                    else{//use buy limit
-                        if(restBuyAmount + sellAmount > 0){//buy > sell, partial buy
-                            buyMarker = processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, sellAmount, limit);
-                            restBuyAmount += sellAmount;
-                            continue;
-                        }
-                        else if(restBuyAmount + sellAmount > 0){//buy < sell, partial sell, end this buy process
-                            buyMarker = processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, restBuyAmount, limit);
-                            continue;
-                        }
-                        else{//perfeet match
-
-                        }
+                    else if(restBuyAmount + sellAmount < 0){//buy < sell, partial sell, end this buy process
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, restBuyAmount, sellLimit);//add whole buy in ORDER_EXECUTE
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, -restBuyAmount, sellLimit);//add partial sell in ORDER_EXECUTE
+                        deleteSingleOrder(accountId, transId, symName, limit, orderTime);  //delete buy 
+                        updateSingleOrder(sellerAccountId, sellId, symName, restBuyAmount, sellLimit, sellTime);   //update sell
+                        //continue;
+                    }
+                    else{//buy amount = sell amount, perfect match
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, restBuyAmount, sellLimit);//add whole buy in ORDER_EXECUTE
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, sellAmount, sellLimit);//add whole sell in ORDER_EXECUTE
+                        deleteSingleOrder(accountId, transId, symName, limit, orderTime);  //delete buy
+                        deleteSingleOrder(sellerAccountId, sellId, symName, sellLimit, sellTime);   //delete sell
                     }
                 }
+                else{//use buy limit
+                    if(restBuyAmount + sellAmount > 0){//buy > sell, partial buy
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, -sellAmount, limit);//add partial buy in ORDER_EXECUTE
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, sellAmount, limit);//add whole sell in ORDER_EXECUTE
+                        deleteSingleOrder(sellerAccountId, sellId, symName, sellLimit, sellTime);   //delete sell
+                        updateSingleOrder(accountId, transId, symName, sellAmount, limit, orderTime);   //update buy
+                        //restBuyAmount += sellAmount;
+                        //continue;
+                    }
+                    else if(restBuyAmount + sellAmount > 0){//buy < sell, partial sell, end this buy process
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, restBuyAmount, limit);//add whole buy in ORDER_EXECUTE
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, -restBuyAmount, limit);//add partial sell in ORDER_EXECUTE
+                        deleteSingleOrder(accountId, transId, symName, limit, orderTime);  //delete buy 
+                        updateSingleOrder(sellerAccountId, sellId, symName, restBuyAmount, sellLimit, sellTime);   //update sell
+                        //continue;
+                    }
+                    else{//buy amount = sell amount, perfect match
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, restBuyAmount, limit);//add whole buy in ORDER_EXECUTE
+                        processSingleTrade(accountId, sellerAccountId, transId, sellId, symName, sellAmount, limit);//add whole sell in ORDER_EXECUTE
+                        deleteSingleOrder(accountId, transId, symName, limit, orderTime);  //delete buy
+                        deleteSingleOrder(sellerAccountId, sellId, symName, sellLimit, sellTime);   //delete sell
+                    }
+                }
+                restBuyAmount = restBuyAmount + sellAmount; //update rest of buy amount
+            }
+        }
+        else if(amount < 0){//for sell, amount > 0
+            cout << "in execute sell order" << endl;
+            string find_match_buy_sql = "SELECT id, ACCOUNT_ID, AMOUNT, LIMITS, TIME from ORDER_OPEN WHERE "\
+                                    "AMOUNT>0 AND LIMITS>=" + to_string(limit) + " AND SYM='" + symName + "' AND ACCOUNT_ID!=" + accountId  + " ORDER BY LIMITS DESC, TIME ASC;";
+            pqxx::nontransaction N1(*C);
+            pqxx::result R1(N1.exec(find_match_buy_sql));
+            N1.commit();
+            float restSellAmount = amount;
+            //bool buyMarker = true;
+            for(pqxx::result::const_iterator c = R1.begin(); c != R1.end(); ++c){
+                cout << "in for" << endl;
+                if(restSellAmount >= 0){ //this buy order is all processed
+                    cout << "this buy order is all processed" << endl;
+                    break;
+                }
+                string buyId = c[0].as<string>();
+                cout << "buyId: " << buyId << endl;
+                string buyerAccountId = c[1].as<string>();
+                float buyAmount = c[2].as<float>();
+                float buyLimit = c[3].as<float>();
+                time_t buyTime = c[4].as<time_t>();
+                if(buyTime < orderTime){//use buy limit
+                    if(restSellAmount + buyAmount > 0){//buy > sell, partial buy, delete sell open order, update buy order
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, -restSellAmount, buyLimit);//add partial buy in ORDER_EXECUTE
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, restSellAmount, buyLimit);//add whole sell in ORDER_EXECUTE
+                        deleteSingleOrder(accountId, transId, symName, limit, orderTime);   //delete sell
+                        updateSingleOrder(buyerAccountId, buyId, symName, restSellAmount, buyLimit, buyTime);   //update buy
+                        //restbuyAmount = restbuyAmount + buyAmount;
+                        //continue;
+                    }
+                    else if(restSellAmount + buyAmount < 0){//buy < sell, partial sell, delete buy open order, update sell order
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, buyAmount, buyLimit);//add whole buy in ORDER_EXECUTE
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, -buyAmount, buyLimit);//add partial sell in ORDER_EXECUTE
+                        deleteSingleOrder(buyerAccountId, buyId, symName, buyLimit, buyTime);  //delete buy 
+                        updateSingleOrder(accountId, transId, symName, buyAmount, limit, orderTime);   //update sell
+                        //continue;
+                    }
+                    else{//buy amount = sell amount, perfect match
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, buyAmount, buyLimit);//add whole buy in ORDER_EXECUTE
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, restSellAmount, buyLimit);//add whole sell in ORDER_EXECUTE
+                        deleteSingleOrder(accountId, transId, symName, limit, orderTime);  //delete sell
+                        deleteSingleOrder(buyerAccountId, buyId, symName, buyLimit, buyTime);   //delete buy
+                    }
+                }
+                else{//use sell limit
+                    if(restSellAmount + buyAmount > 0){//buy > sell, partial buy, delete sell open order, update buy order
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, -restSellAmount, limit);//add partial buy in ORDER_EXECUTE
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, restSellAmount, limit);//add whole sell in ORDER_EXECUTE
+                        deleteSingleOrder(accountId, transId, symName, limit, orderTime);   //delete sell
+                        updateSingleOrder(buyerAccountId, buyId, symName, restSellAmount, buyLimit, buyTime);   //update buy
+                        //restbuyAmount = restbuyAmount + buyAmount;
+                        //continue;
+                    }
+                    else if(restSellAmount + buyAmount < 0){//buy < sell, partial sell, delete buy open order, update sell order
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, buyAmount, limit);//add whole buy in ORDER_EXECUTE
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, -buyAmount, limit);//add partial sell in ORDER_EXECUTE
+                        deleteSingleOrder(buyerAccountId, buyId, symName, buyLimit, buyTime);  //delete buy 
+                        updateSingleOrder(accountId, transId, symName, buyAmount, limit, orderTime);   //update sell
+                        //continue;
+                    }
+                    else{//buy amount = sell amount, perfect match
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, buyAmount, limit);//add whole buy in ORDER_EXECUTE
+                        processSingleTrade(buyerAccountId, accountId, buyId, transId, symName, restSellAmount, limit);//add whole sell in ORDER_EXECUTE
+                        deleteSingleOrder(accountId, transId, symName, limit, orderTime);  //delete sell
+                        deleteSingleOrder(buyerAccountId, buyId, symName, buyLimit, buyTime);   //delete buy
+                    }
+                }
+                restSellAmount = restSellAmount + buyAmount; //update rest of buy amount
             }
         }
         
@@ -278,12 +369,41 @@ bool Database::executeOrder(string accountId, string transId, string symName, fl
     }
 }
 
+void Database::updateSingleOrder(string accountId, string transId, string symName, float amount, float limit, time_t orderTime){
+    cout <<"in update an order" << endl;
+    try{
+        string update_single_order_sql = "UPDATE ORDER_OPEN set AMOUNT=AMOUNT+(" + to_string(amount) + \
+                                ") WHERE ACCOUNT_ID=" + accountId + " AND SYM='" + symName +"' AND id = " \
+                                + transId + "AND LIMITS = " + to_string(limit) + "AND TIME = " + to_string(orderTime) + ";";
+        pqxx::work W(*C);
+        W.exec(update_single_order_sql);
+        W.commit();
+    }
+    catch (const std::exception &e) {
+        cerr << e.what() << std::endl;
+    }
+}
+
+void Database::deleteSingleOrder(string accountId, string transId, string symName, float limit, time_t orderTime){
+    cout <<"in delete an order while it is fully executed" << endl;
+    try{
+        string update_pos_sql = "DELETE FROM ORDER_OPEN WHERE ACCOUNT_ID=" + accountId + " AND SYM='" + symName +"' AND id = " \
+                                + transId + "AND LIMITS = " + to_string(limit) + "AND TIME = " + to_string(orderTime) + ";";
+        pqxx::work W(*C);
+        W.exec(update_pos_sql);
+        W.commit();
+    }
+    catch (const std::exception &e) {
+        cerr << e.what() << std::endl;
+    }
+}
+
 //process two matched order, add in to execution table
-bool Database::processSingleTrade(string buyAccountId, string sellAccountId, string buyTransId, string sellTransId, string symName, float amount, float price){
+void Database::processSingleTrade(string buyAccountId, string sellAccountId, string buyTransId, string sellTransId, string symName, float amount, float price){
     cout << "int process single trade" << endl;
     try{
         time_t currTime = time(NULL);
-        string creat_execution_order_sql = "INSERT INTO EXECUTION (BUYER_ID, SELLER_ID, BUY_ID, SELL_ID, SYM, PRICE, AMOUNT, TIME) VALUES (" +\
+        string creat_execution_order_sql = "INSERT INTO ORDER_EXECUTION (BUYER_ID, SELLER_ID, BUY_ID, SELL_ID, SYM, PRICE, AMOUNT, TIME) VALUES (" +\
                                             buyAccountId + ", " + sellAccountId + \
                                             ", " + buyTransId + ", " + sellTransId + \
                                             ", '" + symName + "', " + to_string(price) +		\
@@ -291,14 +411,48 @@ bool Database::processSingleTrade(string buyAccountId, string sellAccountId, str
         pqxx::work W1(*C);
         W1.exec(creat_execution_order_sql);
         W1.commit();
-        //update buy & delete sell
-
-        //update sell & delete buy
+        cout << "total = " << amount * price<<endl;
+        if(amount <= 0){// sell order
+            cout << "in update positions sell" << endl;
+            string seller_update_position_sql = "UPDATE POSITIONS set AMOUNT=AMOUNT+(" + to_string(amount) + \
+                                ") WHERE ACCOUNT_ID=" + sellAccountId + " AND SYM='" + symName +"';";
+            string seller_update_account_sql = "UPDATE ACCOUNT set BALANCE=BALANCE-(" + to_string(amount * price) + \
+                                ") WHERE ACCOUNT_ID=" + sellAccountId + ";";
+            pqxx::work W2(*C);
+            W2.exec(seller_update_position_sql);
+            W2.commit();
+            //W1.exec(seller_update_position_sql);
+            //W1.exec(seller_update_account_sql); 
+            pqxx::work W3(*C);
+            W3.exec(seller_update_account_sql);
+            W3.commit();
+            return;                    
+        }
+        else{//buy order
+            cout << "in update positions buy" << endl;
+            string buyer_update_position_sql = "UPDATE POSITIONS set AMOUNT=AMOUNT+(" + to_string(amount) + \
+                                ") WHERE ACCOUNT_ID=" + buyAccountId + " AND SYM='" + symName +"';";
+            string buyer_update_account_sql = "UPDATE ACCOUNT set BALANCE=BALANCE-(" + to_string(amount * price) + \
+                                ") WHERE ACCOUNT_ID=" + buyAccountId + ";";
+            //W1.exec(buyer_update_position_sql);
+            //W1.exec(buyer_update_account_sql);
+            //W1.commit();
+            pqxx::work W2(*C);
+            W2.exec(buyer_update_position_sql);
+            W2.commit();
+            //W1.exec(seller_update_position_sql);
+            //W1.exec(seller_update_account_sql); 
+            pqxx::work W3(*C);
+            W3.exec(buyer_update_account_sql);
+            W3.commit(); 
+            return;
+        }
     }
     catch (const std::exception &e) {
         cerr << e.what() << std::endl;
     }
 }
+
 
 bool Database::cancel(string accountId, string transId, vector<CancelOrder> &cancelOpenSet, vector<ExecutedOrder> &cancelExecutedSet){
     try{
@@ -401,11 +555,54 @@ bool Database::checkAccountValid(string accountId){
 }
 
 bool Database::checkBalance(string accountId, float amount, float limits){
-
+    try{
+        string check_balance_sql = "SELECT BALANCE FROM ACCOUNT WHERE ACCOUNT_ID = " + accountId + ";";
+        pqxx::nontransaction N(*C);    
+        pqxx::result R( N.exec(check_balance_sql));
+        N.commit();
+        pqxx::result::const_iterator c = R.begin(); 
+        if( c == R.end()){     
+            return false;
+        }
+        float currentBalance= c[0].as<float>();
+        if(currentBalance >= amount * limits){
+            string update_balance_sql = "UPDATE ACCOUNT set BALANCE=BALANCE-(" + to_string(amount*limits) + \
+                                ") WHERE ACCOUNT_ID=" + accountId + ";";
+            pqxx::work W1(*C);
+            W1.exec(update_balance_sql);
+            W1.commit();
+            return true;
+        }
+    }catch (const std::exception &e) {
+        cerr << e.what() << std::endl;
+    }
+    return false;
 }
 
 bool Database::checkAmount(string accountId, float amount, string symName){
-
+        try{
+        string check_amount_sql = "SELECT AMOUNT FROM POSITIONS WHERE ACCOUNT_ID = " + accountId + \
+                                    " AND SYM='" + symName +"';";
+        pqxx::nontransaction N(*C);    
+        pqxx::result R( N.exec(check_amount_sql));
+        N.commit();
+        pqxx::result::const_iterator c = R.begin(); 
+        if( c == R.end()){     
+            return false;
+        }
+        float currentAmount= c[0].as<float>();
+        if(currentAmount >= amount){
+            string update_amount_sql = "UPDATE POSITIONS set AMOUNT=AMOUNT-(" + to_string(amount) + \
+                                ") WHERE ACCOUNT_ID=" + accountId + " AND SYM='" + symName +"';";
+            pqxx::work W1(*C);
+            W1.exec(update_amount_sql);
+            W1.commit();
+            return true;
+        }
+    }catch (const std::exception &e) {
+        cerr << e.what() << std::endl;
+    }
+    return false;
 }
 
 

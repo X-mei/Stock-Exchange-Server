@@ -19,7 +19,9 @@ public:
     bool createPosition(string symName, string accountId, float amount);
     int createOrder(string symName, string accountId, float amount, float limit);
     bool executeOrder(string accountId, string transId, string symName, float amount, float limit, time_t orderTime);
-    bool processSingleTrade(string buyAccountId, string sellAccountId, string buyTransId, string sellTransId, string symName, float amount, float price);
+    void updateSingleOrder(string accountId, string transId, string symName, float amount, float limit, time_t orderTime);
+    void deleteSingleOrder(string accountId, string transId, string symName, float limit, time_t orderTime);
+    void processSingleTrade(string buyAccountId, string sellAccountId, string buyTransId, string sellTransId, string symName, float amount, float price);
     bool cancel(string accountId, string transId, vector<CancelOrder> &cancelOpenSet, vector<ExecutedOrder> &cancelExecutedSet);
     bool query(string accountId, string transId, vector<OpenOrder> &queryOpenSet, vector<CancelOrder> &queryCancelSet, vector<ExecutedOrder> &queryExecutedSet);
     bool checkAccountValid(string accountId);
