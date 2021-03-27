@@ -4,12 +4,12 @@
   <account id="2" balance="10000"/>
   <account id="3" balance="30000"/>
   <account id="4" balance="10000"/>
-  <account id="1" balance="10000"/>
+  <account id="1" balance="10000"/> <!--error: Failed to create account-->
   <symbol sym="A">
     <account id="1">1000</account>
     <account id="1">1000</account>
     <account id="2">1000</account>
-    <account id="5">1000</account>
+    <account id="5">1000</account> <!--error: Failed to create position-->
   </symbol>
   <symbol sym="A">
     <account id="1">1000</account>

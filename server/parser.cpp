@@ -3,7 +3,7 @@
 string do_create(pugi::xml_document& doc, Database& db){
     // xml_doc to store response
     pugi::xml_document result;
-    pugi::xml_node outer = doc.append_child("result");
+    pugi::xml_node outer = result.append_child("result");
     // iterate through each child of create
     for (pugi::xml_node n: doc.child("create")){
         // to create account
@@ -101,13 +101,13 @@ string do_transactions(pugi::xml_document& doc, Database& db){
                 continue;
             }
             // create order, get correspond order id
-            int order_id = createOrder(sym, account_id, amount, price);
+            int order_id = db.createOrder(sym, account_id, amount, price);
             if (order_id == -1){
                 error.append_child(pugi::node_pcdata).text().set("Amount cannot be zero");
                 continue;
             }
             // 
-            if (!db.executeOrder(account_id, order_id, sym, amount, price)){
+            if (!db.executeOrder(account_id, to_string(order_id), sym, amount, price, time(NULL))){
                 error.append_child(pugi::node_pcdata).text().set("Error executing order");
                 continue;
             }
@@ -119,9 +119,9 @@ string do_transactions(pugi::xml_document& doc, Database& db){
         // handle query request
         else if (name == "query"){
             // create parent node with acquired transaction id
-            int transaction_id = node.attribute("id").as_int();
+            string transaction_id = node.attribute("id").value();
             pugi::xml_node status = outer.append_child("status");
-            status.append_attribute("id") = transaction_id;
+            status.append_attribute("id") = transaction_id.c_str();
             // vectors to store query result
             vector<OpenOrder> Open;
             vector<CancelOrder> notExcecuted;
@@ -151,9 +151,9 @@ string do_transactions(pugi::xml_document& doc, Database& db){
         // handle cancel request
         else if (name == "cancel"){
             // create parent node with acquired transaction id
-            int transaction_id = node.attribute("id").as_int();
+            string transaction_id = node.attribute("id").value();
             pugi::xml_node canceled = outer.append_child("canceled");
-            canceled.append_attribute("id") = transaction_id;
+            canceled.append_attribute("id") = transaction_id.c_str();
             // vectors to store query result
             vector<CancelOrder> notExcecuted;
             vector<ExecutedOrder> Executed;

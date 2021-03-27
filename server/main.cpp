@@ -17,7 +17,7 @@ int main() {
   db.createTables();
   pugi::xml_document doc;
   doc.load_file("testxmls/test1.xml");
-  do_create(doc, db);
+  cout << do_create(doc, db) << endl;
   //db.createAccount("123456", 50000);
   //db.createPosition("SPY", "123456", 5000);
   //db.createOrder("SPY", "123456", 1000, 1000);
