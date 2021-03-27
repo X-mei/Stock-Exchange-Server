@@ -21,7 +21,7 @@ public:
     bool executeOrder(string accountId, string transId, string symName, float amount, float limit, time_t orderTime);
     void updateSingleOrder(string accountId, string transId, string symName, float amount, float limit, time_t orderTime);
     void deleteSingleOrder(string accountId, string transId, string symName, float limit, time_t orderTime);
-    void processSingleTrade(string buyAccountId, string sellAccountId, string buyTransId, string sellTransId, string symName, float amount, float price);
+    void processSingleTrade(string buyAccountId, string sellAccountId, string buyTransId, string sellTransId, string symName, float amount, float price, float processAmount, float processTotal);
     bool cancel(string accountId, string transId, vector<CancelOrder> &cancelOpenSet, vector<ExecutedOrder> &cancelExecutedSet);
     bool query(string accountId, string transId, vector<OpenOrder> &queryOpenSet, vector<CancelOrder> &queryCancelSet, vector<ExecutedOrder> &queryExecutedSet);
     bool checkAccountValid(string accountId);
