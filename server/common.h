@@ -23,4 +23,26 @@
 
 using namespace std;
 
+class OpenOrder{
+public:
+    float shares;
+    OpenOrder(int s):shares(s){};
+};
+
+class CancelOrder{
+public:
+    float shares;
+    time_t time;
+    CancelOrder(int s, time_t t):shares(s), time(t){};
+};
+
+class ExecutedOrder{
+public:
+    float prices;
+    float shares;
+    time_t time;
+    ExecutedOrder(float s, float a, time_t t):prices(a), shares(s), time(t){};
+
+};
+
 #endif
