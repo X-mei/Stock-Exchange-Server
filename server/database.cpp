@@ -241,9 +241,9 @@ bool Database::cancel(string accountId, string transId, vector<CancelOrder> &can
         N2.commit();
         for(pqxx::result::const_iterator c2 = R2.begin(); c2 != R2.end(); ++c2){
             float cancelExcutedPrice= c2[0].as<float>();
-            float cancelExecutedAmount = c2[0].as<float>();
+            float cancelExecutedShare = c2[0].as<float>();
             time_t cancelExecutedTime = c2[0].as<time_t>();
-            cancelExecutedSet.push_back(ExecutedOrder(cancelExcutedPrice, cancelExecutedAmount, cancelExecutedTime));
+            cancelExecutedSet.push_back(ExecutedOrder(cancelExcutedPrice, cancelExecutedShare, cancelExecutedTime));
             cout << "find a execute partial order when cancel it" << endl;
         }
         return true;   
@@ -282,9 +282,9 @@ bool Database::query(string accountId, string transId, vector<OpenOrder> &queryO
         N3.commit();
         for(pqxx::result::const_iterator c = R3.begin(); c != R3.end(); ++c){
             float queryExcutePrice= c[0].as<float>();
-            float queryExcuteAmount = c[0].as<float>();
+            float queryExcuteShare = c[0].as<float>();
             time_t queryExcuteTime = c[0].as<time_t>();
-            queryExecutedSet.push_back(ExecutedOrder(queryExcutePrice, queryExcuteAmount, queryExcuteTime));
+            queryExecutedSet.push_back(ExecutedOrder(queryExcutePrice, queryExcuteShare, queryExcuteTime));
             cout << "find a execute order when query" << endl;
         } 
         return true;                                                                                    

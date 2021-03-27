@@ -38,10 +38,10 @@ public:
 
 class ExecutedOrder{
 public:
+    float prices;
     float shares;
-    float amount;
     time_t time;
-    ExecutedOrder(float s, float a, time_t t):shares(s), amount(a), time(t){};
+    ExecutedOrder(float s, float a, time_t t):prices(a), shares(s), time(t){};
 
 };
 
