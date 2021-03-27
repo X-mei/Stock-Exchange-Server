@@ -3,7 +3,7 @@ using namespace std;
 
 Database::Database(){
     try{
-        C = new pqxx::connection("dbname=exchangedb user=postgres password=Z hostaddr=127.0.0.1 port=5432");
+        C = new pqxx::connection("dbname=exchangedb user=postgres password=Gemeihong1 hostaddr=127.0.0.1 port=5432");
         //this->C = temp;
       //C = new pqxx::connection("dbname=testdb user=postgres password=cohondob, hostaddr=127.0.0.1 port=5432");
         if (C->is_open()) {

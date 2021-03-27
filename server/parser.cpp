@@ -1,29 +1,30 @@
 #include "parser.h"
 
-string do_create(pugi::xml_document& doc, database& db){
+string do_create(pugi::xml_document& doc, Database& db){
     // xml_doc to store response
     pugi::xml_document result;
     pugi::xml_node outer = doc.append_child("result");
     // iterate through each child of create
     for (pugi::xml_node n: doc.child("create")){
         // to create account
-        if (n.name() == "account"){
+        string name = n.name();
+        if (name == "account"){
             string id = n.attribute("id").value();
             float balance = n.attribute("balance").as_float();
             // check if create account is successful
             if(db.createAccount(id, balance)){
                 pugi::xml_node ac = outer.append_child("created");
-                ac.append_attribute("id") = id;
+                ac.append_attribute("id").set_value(id.c_str());
             }
             // form error message if not successful
             else {
                 pugi::xml_node ac = outer.append_child("error");
-                ac.append_attribute("id") = id;
-                ac.append_child(pugi::node_pcdata).set_value("Failed to create account");
+                ac.append_attribute("id").set_value(id.c_str());
+                ac.append_child(pugi::node_pcdata).text().set("Failed to create account");
             }
         }
         // to create position
-        else if (n.name() == "symbol"){
+        else if (name == "symbol"){
             string sym = n.attribute("sym").value();
             // iterate through all position create request
             for (pugi::xml_node sub_n: n.children()){
@@ -32,88 +33,91 @@ string do_create(pugi::xml_document& doc, database& db){
                 float num = sub_n.text().as_float();
                 if (db.createPosition(sym, id, num)){
                     pugi::xml_node po = outer.append_child("created");
-                    po.append_attribute("sym") = sym;
-                    po.append_attribute("id") = id;
+                    po.append_attribute("sym").set_value(sym.c_str());
+                    po.append_attribute("id").set_value(id.c_str());
                 }
                 else {
                     pugi::xml_node po = outer.append_child("error");
-                    po.append_attribute("sym") = sym;
-                    po.append_attribute("id") = id;
-                    po.append_child(pugi::node_pcdata).set_value("Failed to create position");
+                    po.append_attribute("sym").set_value(sym.c_str());
+                    po.append_attribute("id").set_value(id.c_str());
+                    po.append_child(pugi::node_pcdata).text().set("Failed to create position");
                 }
             }
         }
         // invalid node name
         else {
-            throw std::invalid_argument("XML not legal.");
+            continue;
+            //throw std::invalid_argument("XML not legal.");
         }
-        // save xml into ss and return in the form of string
-        stringstream ss;
-        result.save(ss);
-        return ss.str();
+        
     }
-    return ;
+    // save xml into ss and return in the form of string
+    stringstream ss;
+    result.save(ss);
+    return ss.str();
 }
 
-String do_transactions(pugi::xml_document& doc, database& db){
+string do_transactions(pugi::xml_document& doc, Database& db){
     // xml_doc to store response
     pugi::xml_document result;
     pugi::xml_node outer = doc.append_child("result");
-    String account_id = doc.attribute("id").value();
+    string account_id = doc.attribute("id").value();
     // if account do not exist, return xml with error message
-    if (!db.checkAccountValid()){
-        head.append_child("error").text().set("Invalid account ID");
+    if (!db.checkAccountValid(account_id)){
+        outer.append_child("error").text().set("Invalid account ID");
         stringstream ss;
         result.save(ss);
         return ss.str();
     }
     // parse the xml, traverse all child of transactions
     for (pugi::xml_node node: doc.child("transactions")){
-        if (node.name() == "order"){
-            String sym = node.attribute("sym").value();
+        string name = node.name();
+        if (name == "order"){
+            string sym = node.attribute("sym").value();
             float amount = node.attribute("amount").as_float();
             float price = node.attribute("limit").as_float();
             // create a temp error tag, change it to opened if no error occured
             pugi::xml_node error = outer.append_child("error");
-            error.append_attribute("sym") = sym;
+            error.append_attribute("sym") = sym.c_str();
             error.append_attribute("amount") = amount;
             error.append_attribute("limit") = price;
             // if its a buy order
             if (amount > 0){
                 if (!db.checkBalance(account_id, amount, price)){
-                    error.text().set_value("Unable to buy: insefficient funds");
+                    error.append_child(pugi::node_pcdata).text().set("Unable to buy: insefficient funds");
                     continue;
                 }
             }
             // if its a sell order
             else if (amount <0){
-                if (!db.checkAmount(account_id, sym, amount)){
-                    error.text().set_value("Unable to sell: insefficient shares");
+                if (!db.checkAmount(account_id, amount, sym)){
+                    error.append_child(pugi::node_pcdata).text().set("Unable to sell: insefficient shares");
                     continue;
                 }
             }
             // if amount is 0
             else {
-                error.text().set_value("Amount cannot be zero");
+                error.append_child(pugi::node_pcdata).text().set("Amount cannot be zero");
                 continue;
             }
             // create order, get correspond order id
             int order_id = createOrder(sym, account_id, amount, price);
             if (order_id == -1){
-                error.text().set_value("Amount cannot be zero");
+                error.append_child(pugi::node_pcdata).text().set("Amount cannot be zero");
                 continue;
             }
             // 
             if (!db.executeOrder(account_id, order_id, sym, amount, price)){
-                error.text().set_value("Error executing order");
+                error.append_child(pugi::node_pcdata).text().set("Error executing order");
                 continue;
             }
             else {
                 error.set_name("opened");
+                error.append_attribute("id") = order_id;
             }
         }
         // handle query request
-        else if (node.name() == "query"){
+        else if (name == "query"){
             // create parent node with acquired transaction id
             int transaction_id = node.attribute("id").as_int();
             pugi::xml_node status = outer.append_child("status");
@@ -141,11 +145,11 @@ String do_transactions(pugi::xml_document& doc, database& db){
             }
             // create error response when given transaction id can't be found
             else {
-                status.append_child("error").text().set("Transaction ID not found");
+                status.append_child("error").append_child(pugi::node_pcdata).text().set("Transaction ID not found");
             }
         }
         // handle cancel request
-        else if (node.name() == "cancel"){
+        else if (name == "cancel"){
             // create parent node with acquired transaction id
             int transaction_id = node.attribute("id").as_int();
             pugi::xml_node canceled = outer.append_child("canceled");
@@ -169,12 +173,13 @@ String do_transactions(pugi::xml_document& doc, database& db){
             }
             // create error response when given transaction id can't be found
             else {
-                canceled.append_child("error").text().set("Transaction ID not found");
+                canceled.append_child("error").append_child(pugi::node_pcdata).text().set("Transaction ID not found");
             }
         }
         // throw exception when the top-level tag is not valid
         else {
-            throw std::invalid_argument("XML not legal.");
+            continue;
+            //throw std::invalid_argument("XML not legal.");
         }
     }
     // save xml into ss and return in the form of string

@@ -21,6 +21,8 @@
 #include <vector>
 #include <mutex>
 
+#include "pugixml/src/pugixml.hpp"
+
 using namespace std;
 
 class OpenOrder{

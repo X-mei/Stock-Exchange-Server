@@ -1,8 +1,8 @@
 #ifndef PARSER_H
 #define PARSER_H
 #include "common.h"
-#include "pugixml/src/pugixml.hpp"
+#include "database.h"
 
-String do_create(pugi::xml_document& doc);
-String do_transactions(pugi::xml_document& doc);
+string do_create(pugi::xml_document& doc, Database& db);
+string do_transactions(pugi::xml_document& doc, Database& db);
 #endif
