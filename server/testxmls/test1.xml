@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <create>
-  <account id="1" balance="10000"/>
-  <account id="2" balance="10000"/>
+  <account id="1" balance="100000"/>
+  <account id="2" balance="100000"/>
   <account id="3" balance="30000"/>
   <account id="4" balance="10000"/>
   <account id="1" balance="10000"/> <!--error: Failed to create account-->
   <symbol sym="A">
     <account id="1">1000</account>
     <account id="1">1000</account>
+    <account id="3">1000</account>
     <account id="2">1000</account>
     <account id="5">1000</account> <!--error: Failed to create position-->
   </symbol>
@@ -16,7 +17,7 @@
   </symbol>
   <symbol sym="B">
     <account id="2">1000</account>
-   <account id="3">1000</account>
+    <account id="3">1000</account>
   </symbol>
   <symbol sym="C">
     <account id="1">1000</account>  

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<transactions account="1">
-  <query id="1"/>
-  <query id="2"/>
-  <query id="3"/>
-  <query id="4"/> <!--error-->
+<transactions id="2">
+  <order sym="A" amount="30" limit="125"/>
+  <order sym="A" amount="20" limit="127"/>
+  <order sym="A" amount="40" limit="125"/>
 </transactions>

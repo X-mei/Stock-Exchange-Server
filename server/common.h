@@ -43,7 +43,7 @@ public:
     float prices;
     float shares;
     time_t time;
-    ExecutedOrder(float s, float a, time_t t):prices(a), shares(s), time(t){};
+    ExecutedOrder(float a, float s, time_t t):prices(a), shares(s), time(t){};
 
 };
 

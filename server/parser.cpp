@@ -60,8 +60,9 @@ string do_create(pugi::xml_document& doc, Database& db){
 string do_transactions(pugi::xml_document& doc, Database& db){
     // xml_doc to store response
     pugi::xml_document result;
-    pugi::xml_node outer = doc.append_child("result");
-    string account_id = doc.attribute("id").value();
+    pugi::xml_node outer = result.append_child("result");
+    string account_id = doc.child("transactions").attribute("id").value();
+    cout<<account_id<<endl;
     // if account do not exist, return xml with error message
     if (!db.checkAccountValid(account_id)){
         outer.append_child("error").text().set("Invalid account ID");
@@ -89,7 +90,7 @@ string do_transactions(pugi::xml_document& doc, Database& db){
                 }
             }
             // if its a sell order
-            else if (amount <0){
+            else if (amount < 0){
                 if (!db.checkAmount(account_id, amount, sym)){
                     error.append_child(pugi::node_pcdata).text().set("Unable to sell: insefficient shares");
                     continue;
@@ -103,12 +104,7 @@ string do_transactions(pugi::xml_document& doc, Database& db){
             // create order, get correspond order id
             int order_id = db.createOrder(sym, account_id, amount, price);
             if (order_id == -1){
-                error.append_child(pugi::node_pcdata).text().set("Amount cannot be zero");
-                continue;
-            }
-            // 
-            if (!db.executeOrder(account_id, to_string(order_id), sym, amount, price, time(NULL))){
-                error.append_child(pugi::node_pcdata).text().set("Error executing order");
+                error.append_child(pugi::node_pcdata).text().set("Error creating order");
                 continue;
             }
             else {
