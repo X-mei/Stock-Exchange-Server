@@ -13,12 +13,11 @@ private:
     struct addrinfo *host_info_list;
     struct sockaddr_storage their_addr;
     socklen_t addr_size;
-    Database db;
-    void recvRequest(int& new_socket_fd);
+    void recvRequest(int& new_socket_fd, Database& db);
     vector<char> recv_vector(int& new_socket_fd);
     void send_back(int& new_socket_fd, string &response);
 public:
-    Server(Database& db);
+    Server();
     void runServer();
     ~Server() {}
 

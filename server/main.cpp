@@ -12,11 +12,10 @@ int main() {
   // vector<OpenOrder> queryOpenSet;
   // vector<CancelOrder> queryCancelSet;
   // vector<ExecutedOrder> queryExecutedSet;
-  
   Database db;
   db.clearTables();
   db.createTables();
-  Server sv(db);
+  Server sv;
   sv.runServer();
 
   // bool refresh;

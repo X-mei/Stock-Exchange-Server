@@ -1,7 +1,6 @@
 #include "server.h"
 
-Server::Server(Database& db){
-    this->db = db;
+Server::Server(){
     memset(&host_info, 0, sizeof(host_info));
     host_info.ai_family = AF_UNSPEC;
     host_info.ai_socktype = SOCK_STREAM;
@@ -101,7 +100,7 @@ void Server::send_back(int& new_socket_fd, string& response) {
   return;
 }
 
-void Server::recvRequest(int& new_socket_fd){
+void Server::recvRequest(int& new_socket_fd, Database& db){
     vector<char> buffer = recv_vector(new_socket_fd);
     pugi::xml_document doc;
     pugi::xml_parse_result res = doc.load_string(buffer.data());
@@ -129,6 +128,7 @@ void Server::runServer(){
     // call new thread to handle request.
     addr_size = sizeof(their_addr);
     int new_socket_fd = accept(socket_fd, (struct sockaddr *)&their_addr, &addr_size);
-    recvRequest(new_socket_fd);
+    Database db;
+    recvRequest(new_socket_fd, db);
     close(socket_fd);
 }
