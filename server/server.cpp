@@ -1,4 +1,5 @@
 #include "server.h"
+#define BUFF_SIZE 409600
 
 Server::Server(){
     memset(&host, 0, sizeof(host));
