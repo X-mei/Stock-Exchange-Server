@@ -1,38 +1,44 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.h"
+#include "server.h"
 #include "database.h"
 
 // main function
 int main() {
   // start
-  vector<CancelOrder> cancelOpenSet;
-  vector<ExecutedOrder> cancelExecutedSet;
-  vector<OpenOrder> queryOpenSet;
-  vector<CancelOrder> queryCancelSet;
-  vector<ExecutedOrder> queryExecutedSet;
- 
+  // vector<CancelOrder> cancelOpenSet;
+  // vector<ExecutedOrder> cancelExecutedSet;
+  // vector<OpenOrder> queryOpenSet;
+  // vector<CancelOrder> queryCancelSet;
+  // vector<ExecutedOrder> queryExecutedSet;
+  
   Database db;
-  bool refresh;
-  cin >> refresh;
-  if (refresh){
-    db.clearTables();
-    db.createTables();
-    pugi::xml_document doc1;
-    pugi::xml_document doc2;
-    pugi::xml_document doc3;
-    doc1.load_file("testxmls/test1.xml");
-    doc2.load_file("testxmls/test2.xml");
-    doc3.load_file("testxmls/test3.xml");
-    cout << do_create(doc1, db) << endl;
-    cout << do_transactions(doc2, db) << endl;
-    cout << do_transactions(doc3, db) << endl;
-  }
-  else {
-    pugi::xml_document doc5;
-    doc5.load_file("testxmls/test5.xml");
-    cout << do_transactions(doc5, db) << endl;
-  }
+  db.clearTables();
+  db.createTables();
+  Server sv(db);
+  sv.runServer();
+
+  // bool refresh;
+  // cin >> refresh;
+  // if (refresh){
+  //   db.clearTables();
+  //   db.createTables();
+  //   pugi::xml_document doc1;
+  //   pugi::xml_document doc2;
+  //   pugi::xml_document doc3;
+  //   doc1.load_file("testxmls/test1.xml");
+  //   doc2.load_file("testxmls/test2.xml");
+  //   doc3.load_file("testxmls/test3.xml");
+  //   cout << do_create(doc1, db) << endl;
+  //   cout << do_transactions(doc2, db) << endl;
+  //   cout << do_transactions(doc3, db) << endl;
+  // }
+  // else {
+  //   pugi::xml_document doc5;
+  //   doc5.load_file("testxmls/test5.xml");
+  //   cout << do_transactions(doc5, db) << endl;
+  // }
   
   
   //cout << "###### Result ######"<< endl;

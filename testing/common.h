@@ -13,5 +13,9 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+using namespace std;
 
 #endif
