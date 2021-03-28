@@ -1,12 +1,12 @@
 #include "server.h"
-#define BUFF_SIZE 409600
 
-Server::Server(){
-    memset(&host, 0, sizeof(host));
+Server::Server(Database& db){
+    this->db = db;
+    memset(&host_info, 0, sizeof(host_info));
     host_info.ai_family = AF_UNSPEC;
     host_info.ai_socktype = SOCK_STREAM;
     host_info.ai_flags = AI_PASSIVE;
-    status = getaddrinfo(NULL, SERVERPORT, &host, &host_info_list);
+    status = getaddrinfo(NULL, PORT, &host_info, &host_info_list);
 
     if (status != 0) {
         cerr << "Error: address issue" << endl;
@@ -38,11 +38,12 @@ Server::Server(){
         cerr << "Error: listen fail" << endl;
         exit(EXIT_FAILURE);
     }
+    free(host_info_list);
 }
 
-vector<char> recv_vector(){
+vector<char> Server::recv_vector(int& new_socket_fd){
     vector<char> buff(BUFF_SIZE);
-    int data_len = recv(socket_fd, &(buff.data()[0]), BUFF_SIZE, 0);
+    int data_len = recv(new_socket_fd, &(buff.data()[0]), BUFF_SIZE, 0);
     int index = data_len;
     int total_len = 0;
     try {
@@ -59,7 +60,7 @@ vector<char> recv_vector(){
     if (data_len >= BUFF_SIZE) {
         while (data_len != 0) {
             buff.resize(index + 1024);
-            data_len = recv(socket_fd, &(buff.data()[index]), 1024, 0);
+            data_len = recv(new_socket_fd, &(buff.data()[index]), 1024, 0);
             index += data_len;
             if (data_len < 1024 && data_len > 0) {
                 buff.resize(index);
@@ -81,18 +82,18 @@ vector<char> recv_vector(){
     }
     buff.erase(buff.begin());
     return buff;
-    }
+    
 }
 
-void send_back(int &client_fd, string &response) {
+void Server::send_back(int& new_socket_fd, string& response) {
   cout << "start sending back" << endl;
   size_t sent = 0;
   vector<char> res(response.begin(), response.end());
   while (1) {
     if (sent + 1024 < res.size()) {
-      sent += send(client_fd, &(res.data()[sent]), 1024, 0);
+      sent += send(new_socket_fd, &(res.data()[sent]), 1024, 0);
     } else {
-      sent += send(client_fd, &(res.data()[sent]), res.size() - sent, 0);
+      sent += send(new_socket_fd, &(res.data()[sent]), res.size() - sent, 0);
       break;
     }
   }
@@ -100,6 +101,34 @@ void send_back(int &client_fd, string &response) {
   return;
 }
 
+void Server::recvRequest(int& new_socket_fd){
+    vector<char> buffer = recv_vector(new_socket_fd);
+    pugi::xml_document doc;
+    pugi::xml_parse_result res = doc.load_string(buffer.data());
+    string response;
+    if (buffer.empty() || !res){
+        cout << "Error parsing xml" << endl;
+        response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error>Illegal XML Format</error>\n";
+    }
+    if (doc.child("create")){
+        response = do_create(doc, db);
+    }
+    else if (doc.child("transactions")){
+        response = do_transactions(doc, db);
+    }
+    else {
+        cout << "XML syntax not supported" << endl;
+        response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error>XML tag not supported</error>\n";
+    }
+    send_back(new_socket_fd, response);
+    close(new_socket_fd);
+    return;
+}
+
 void Server::runServer(){
-    
+    // call new thread to handle request.
+    addr_size = sizeof(their_addr);
+    int new_socket_fd = accept(socket_fd, (struct sockaddr *)&their_addr, &addr_size);
+    recvRequest(new_socket_fd);
+    close(socket_fd);
 }
