@@ -48,7 +48,7 @@ Database::~Database(){
 void Database::clearTables(){
     try{
         string drop_table_sql = "DROP TABLE ACCOUNT, POSITIONS, ORDER_OPEN, ORDER_EXECUTION, ORDER_CANCEL;";
-        pqxx::nontransaction W(*C);
+        pqxx::work W(*C);
         W.exec(drop_table_sql);
         W.commit();
         cout << "Drop all previous tables successfully" << endl;
@@ -60,7 +60,7 @@ void Database::clearTables(){
 }
 
 void Database::createTables() {
-    pqxx::nontransaction W(*C);
+    pqxx::work W(*C);
 
     std::string account_sql = "CREATE TABLE ACCOUNT("\
     "ACCOUNT_ID INT PRIMARY KEY NOT NULL UNIQUE,"\
@@ -144,7 +144,7 @@ bool Database::createAccount(string accountId, float balance){
             cerr << e.what() << std::endl;
         }*/
         string create_new_accoun_sql = "INSERT INTO ACCOUNT (ACCOUNT_ID, BALANCE) VALUES (" + accountId + ", " + to_string(balance) + ");";
-        //pqxx::nontransaction W(*C);
+        //pqxx::work W(*C);
         //W.exec(create_new_accoun_sql);
         N.exec(create_new_accoun_sql);
         N.commit();
@@ -185,7 +185,7 @@ bool Database::createPosition(string symName, string accountId, float amount){
                 string create_pos_sql = "INSERT INTO POSITIONS (ACCOUNT_ID, SYM, AMOUNT) "		\
                                         "VALUES (" + accountId + ", '" + symName + "', " + to_string(amount) + ");";
                 //N2.commit();
-                //pqxx::nontransaction W(*C);
+                //pqxx::work W(*C);
                 N.exec(create_pos_sql);           
                 N.commit();
                 cout << " create a position" << endl;
@@ -198,7 +198,7 @@ bool Database::createPosition(string symName, string accountId, float amount){
                 //int updateAmount = c2[0].as<int>() + amount;
                 string update_pos_sql = "UPDATE POSITIONS set AMOUNT=AMOUNT+" + to_string(amount) + " WHERE ACCOUNT_ID=" + accountId + " AND SYM='" + symName + "';";
                 //N2.commit();
-                //pqxx::nontransaction W(*C);
+                //pqxx::work W(*C);
                 N.exec(update_pos_sql);
                 N.commit();
                 cout << " update a position" << endl;
@@ -216,7 +216,7 @@ bool Database::createPosition(string symName, string accountId, float amount){
 
 int Database::createOrder(string symName, string accountId, float amount, float limit){
     bool marker = false;
-    pqxx::nontransaction W(*C);
+    pqxx::work W(*C);
     while(marker != true){
         try{
             // if(amount < 0){ //sell, check amount 
@@ -229,7 +229,7 @@ int Database::createOrder(string symName, string accountId, float amount, float 
             string create_order_sql ="INSERT INTO ORDER_OPEN (ACCOUNT_ID, SYM, AMOUNT, LIMITS, TIME) VALUES (" +\
                                     accountId + ", '" + symName + "', " + to_string(amount) + ", " +\
                                     to_string(limit) + ", " + to_string(currTime) + ");";
-            //pqxx::nontransaction W(*C);
+            //pqxx::work W(*C);
             W.exec(create_order_sql);
             //W.commit();
             //pqxx::nontransaction N(*C);
@@ -257,7 +257,7 @@ int Database::createOrder(string symName, string accountId, float amount, float 
 
 bool Database::executeOrder(string accountId, string transId, string symName, float amount, float limit, time_t orderTime){
     bool marker = false;
-    pqxx::nontransaction W(*C);
+    pqxx::work W(*C);
     while(marker != true){
         try{
             if(amount > 0){//for buy, amount > 0
@@ -431,14 +431,14 @@ bool Database::executeOrder(string accountId, string transId, string symName, fl
 
 void Database::updateSingleOrder(string accountId, string transId, string symName, float amount, float limit, time_t orderTime){
     cout <<"in update an order" << endl;
-    pqxx::nontransaction W(*C);
+    pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
         try{
             string update_single_order_sql = "UPDATE ORDER_OPEN set AMOUNT=AMOUNT+(" + to_string(amount) + \
                                     ") WHERE ACCOUNT_ID=" + accountId + " AND SYM='" + symName +"' AND id = " \
                                     + transId + "AND LIMITS = " + to_string(limit) + "AND TIME = " + to_string(orderTime) + ";";
-            //pqxx::nontransaction W(*C);
+            //pqxx::work W(*C);
             W.exec(update_single_order_sql);
             W.commit();
             marker = true;
@@ -452,13 +452,13 @@ void Database::updateSingleOrder(string accountId, string transId, string symNam
 
 void Database::deleteSingleOrder(string accountId, string transId, string symName, float limit, time_t orderTime){
     cout <<"in delete an order while it is fully executed" << endl;
-    pqxx::nontransaction W(*C);
+    pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
         try{
             string update_pos_sql = "DELETE FROM ORDER_OPEN WHERE ACCOUNT_ID=" + accountId + " AND SYM='" + symName +"' AND id = " \
                                     + transId + "AND LIMITS = " + to_string(limit) + "AND TIME = " + to_string(orderTime) + ";";
-            //pqxx::nontransaction W(*C);
+            //pqxx::work W(*C);
             W.exec(update_pos_sql);
             W.commit();
             marker = true;
@@ -473,7 +473,7 @@ void Database::deleteSingleOrder(string accountId, string transId, string symNam
 //process two matched order, add in to execution table
 void Database::processSingleTrade(string buyAccountId, string sellAccountId, string buyTransId, string sellTransId, string symName, float amount, float price, float processAmount, float processTotal){
     cout << "in process single trade" << endl;
-    pqxx::nontransaction W(*C);
+    pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
         try{
@@ -484,7 +484,7 @@ void Database::processSingleTrade(string buyAccountId, string sellAccountId, str
                                                     ", " + buyTransId + ", " + sellTransId + \
                                                     ", '" + symName + "', " + to_string(price) +		\
                                                     ", " + to_string(amount) + ", " + to_string(currTime) + ");";
-                //pqxx::nontransaction W1(*C);
+                //pqxx::work W1(*C);
                 W.exec(creat_execution_order_sql);
                 //W1.commit();
                 cout << "total = " << amount * price<<endl;
@@ -493,10 +493,10 @@ void Database::processSingleTrade(string buyAccountId, string sellAccountId, str
                                     ") WHERE ACCOUNT_ID=" + sellAccountId + " AND SYM='" + symName +"';";
                 string seller_update_account_sql = "UPDATE ACCOUNT set BALANCE=BALANCE-(" + to_string(processTotal) + \
                                     ") WHERE ACCOUNT_ID=" + sellAccountId + ";";
-                //pqxx::nontransaction W2(*C);
+                //pqxx::work W2(*C);
                 W.exec(seller_update_position_sql);
                 //W2.commit();
-                //pqxx::nontransaction W3(*C);
+                //pqxx::work W3(*C);
                 W.exec(seller_update_account_sql);
                 W.commit();
                 marker = true;
@@ -509,7 +509,7 @@ void Database::processSingleTrade(string buyAccountId, string sellAccountId, str
                                                     ", " + buyTransId + ", " + sellTransId + \
                                                     ", '" + symName + "', " + to_string(price) +		\
                                                     ", " + to_string(amount) + ", " + to_string(currTime) + ");";
-                //pqxx::nontransaction W1(*C);
+                //pqxx::work W1(*C);
                 W.exec(creat_execution_order_sql);
                 //W1.commit();
                 cout << "total = " << amount * price<<endl;
@@ -518,10 +518,10 @@ void Database::processSingleTrade(string buyAccountId, string sellAccountId, str
                                     ") WHERE ACCOUNT_ID=" + buyAccountId + " AND SYM='" + symName +"';";
                 string buyer_update_account_sql = "UPDATE ACCOUNT set BALANCE=BALANCE-(" + to_string(processTotal) + \
                                     ") WHERE ACCOUNT_ID=" + buyAccountId + ";";
-                //pqxx::nontransaction W2(*C);
+                //pqxx::work W2(*C);
                 W.exec(buyer_update_position_sql);
                 //W2.commit();
-                //pqxx::nontransaction W3(*C);
+                //pqxx::work W3(*C);
                 W.exec(buyer_update_account_sql);
                 W.commit();
                 marker = true; 
@@ -537,7 +537,7 @@ void Database::processSingleTrade(string buyAccountId, string sellAccountId, str
 
 
 bool Database::cancel(string accountId, string transId, vector<CancelOrder> &cancelOpenSet, vector<ExecutedOrder> &cancelExecutedSet){
-    pqxx::nontransaction W(*C);
+    pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
         try{
@@ -554,7 +554,7 @@ bool Database::cancel(string accountId, string transId, vector<CancelOrder> &can
                 if(cancelAmount < 0){//cancel sell, return amount
                     string give_back_positions_amount_sql = "UPDATE POSITIONS set AMOUNT=AMOUNT-(" + to_string(cancelAmount) + \
                                     ") WHERE ACCOUNT_ID=" + accountId + " AND SYM='" + cancelSymName +"';";
-                    //pqxx::nontransaction W1(*C);
+                    //pqxx::work W1(*C);
                     W.exec(give_back_positions_amount_sql);
                     //W.commit();
                     //marker = true;
@@ -563,7 +563,7 @@ bool Database::cancel(string accountId, string transId, vector<CancelOrder> &can
                     float totalCancel = cancelAmount * cancelLimit;
                     string give_back_account_balance_sql = "UPDATE ACCOUNT set BALANCE=BALANCE+(" + to_string(totalCancel) + \
                                     ") WHERE ACCOUNT_ID=" + accountId + " ;";
-                    //pqxx::nontransaction W1(*C);
+                    //pqxx::work W1(*C);
                     W.exec(give_back_account_balance_sql);
                     //W.commit();
                    //marker = true;                    
@@ -573,7 +573,7 @@ bool Database::cancel(string accountId, string transId, vector<CancelOrder> &can
                 string add_cancel_from_open_order_sql ="INSERT INTO ORDER_CANCEL (ACCOUNT_ID, TRANS_ID, AMOUNT, TIME) VALUES (" +\
                                     accountId + ", " + transId + ", " + to_string(cancelAmount) + ", " + to_string(currTime) + ");";
                 string delete_cancel_from_open_order_sql = "DELETE FROM ORDER_OPEN WHERE id=" + transId + ";";
-                //pqxx::nontransaction W(*C);
+                //pqxx::work W(*C);
                 W.exec(add_cancel_from_open_order_sql);
                 W.exec(delete_cancel_from_open_order_sql);
                 //W.commit();
@@ -604,7 +604,7 @@ bool Database::cancel(string accountId, string transId, vector<CancelOrder> &can
 }
 
 bool Database::query(string accountId, string transId, vector<OpenOrder> &queryOpenSet, vector<CancelOrder> &queryCancelSet, vector<ExecutedOrder> &queryExecutedSet){
-    pqxx::nontransaction W(*C);
+    pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
         try{
@@ -664,7 +664,7 @@ bool Database::query(string accountId, string transId, vector<OpenOrder> &queryO
 
 
 bool Database::checkAccountValid(string accountId){
-    pqxx::nontransaction W(*C);
+    pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
         try{
@@ -686,7 +686,7 @@ bool Database::checkAccountValid(string accountId){
 }
 
 bool Database::checkBalance(string accountId, float amount, float limits){
-    pqxx::nontransaction W(*C);
+    pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
         try{
@@ -706,7 +706,7 @@ bool Database::checkBalance(string accountId, float amount, float limits){
             if(currentBalance >= amount * limits){
                 string update_balance_sql = "UPDATE ACCOUNT set BALANCE=BALANCE-(" + to_string(amount*limits) + \
                                     ") WHERE ACCOUNT_ID=" + accountId + ";";
-                //pqxx::nontransaction W1(*C);
+                //pqxx::work W1(*C);
                 W.exec(update_balance_sql);
                 W.commit();
                 marker = true;
@@ -722,7 +722,7 @@ bool Database::checkBalance(string accountId, float amount, float limits){
 
 //only for sell
 bool Database::checkAmount(string accountId, float amount, string symName){
-    pqxx::nontransaction W(*C);
+    pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
             try{
@@ -743,7 +743,7 @@ bool Database::checkAmount(string accountId, float amount, string symName){
             if(currentAmount + amount >= 0){
                 string update_amount_sql = "UPDATE POSITIONS set AMOUNT=AMOUNT+(" + to_string(amount) + \
                                     ") WHERE ACCOUNT_ID=" + accountId + " AND SYM='" + symName +"';";
-                //pqxx::nontransaction W1(*C);
+                //pqxx::work W1(*C);
                 W.exec(update_amount_sql);
                 W.commit();
                 marker = true;
