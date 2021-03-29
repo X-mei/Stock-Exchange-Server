@@ -5,7 +5,6 @@
 #include "myexception.h"
 using namespace std;
 
-
 class Database{
 public:
     pqxx::connection *C;
