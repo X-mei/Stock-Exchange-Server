@@ -1,9 +1,10 @@
 #include "common.h"
 #define SERVER_HOSTNAME "vcm-18172.vm.duke.edu"
 #define SERVER_PORT "12345"
-#define BUFF_SIZE 409600
+#define MAX_THREAD 5
+#define BUFF_SIZE 10240
 
-void handler(char * fname){
+void handler(void * fname){
     char buffer[BUFF_SIZE];
     int server_fd;
     int stat;
@@ -36,10 +37,11 @@ void handler(char * fname){
         cerr << "Connection failed.\n";
         exit(EXIT_FAILURE);
     }
+    char *temp = (char *)fname;
     stringstream ss;
-    ifstream input_file(fname);
+    ifstream input_file(temp);
     if (!input_file.is_open()) {
-        cerr << "Could not open the file - '"<< fname << "'" << endl;
+        cerr << "Could not open the file - '"<< temp << "'" << endl;
         exit(EXIT_FAILURE);
     }
     ss << input_file.rdbuf();
@@ -57,5 +59,16 @@ int main(int argc, char** argv){
         cerr << "Invalid input count." << endl;
         exit(EXIT_FAILURE);
     }
-    handler(argv[1]);
+    vector<thread> threads;
+    for (int i=0; i<MAX_THREAD; i++){
+        thread th(handler, argv[1]);
+        threads.push_back(move(th));
+        usleep(5000);
+    }
+    cout << threads.size() << endl;
+    //handler(argv[1]);
+    for (auto& t : threads){
+        t.join();
+    }
+    return 0;
 }

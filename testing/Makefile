@@ -1,8 +1,13 @@
+CFLAGS=-std=gnu++11 -pedantic -ggdb3
+EXTRAFLAGS=-lpqxx -lpq -pthread
+
 all: client
 
-test: client.cpp
-	g++ -O3 -std=c++11 -pthread -o client client.cpp
+client: client.cpp common.h
+	g++ $(CFLAGS) -o client client.cpp $(EXTRAFLAGS)
 
-.PHONY:
 clean:
-	rm -f test *.o *~
+	rm -f *~ *.o server
+
+clobber:
+	rm -f *~ *.o
