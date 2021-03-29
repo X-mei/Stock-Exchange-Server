@@ -20,6 +20,7 @@
 #include <pqxx/pqxx>
 #include <vector>
 #include <mutex>
+#include <thread>
 
 #include "pugixml/src/pugixml.hpp"
 

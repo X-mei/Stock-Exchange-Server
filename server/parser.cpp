@@ -1,6 +1,6 @@
 #include "parser.h"
 
-string do_create(pugi::xml_document& doc, Database& db){
+string do_create(pugi::xml_document& doc, Database* db){
     // xml_doc to store response
     pugi::xml_document result;
     pugi::xml_node outer = result.append_child("result");
@@ -12,7 +12,7 @@ string do_create(pugi::xml_document& doc, Database& db){
             string id = n.attribute("id").value();
             float balance = n.attribute("balance").as_float();
             // check if create account is successful
-            if(db.createAccount(id, balance)){
+            if(db->createAccount(id, balance)){
                 pugi::xml_node ac = outer.append_child("created");
                 ac.append_attribute("id").set_value(id.c_str());
             }
@@ -31,7 +31,7 @@ string do_create(pugi::xml_document& doc, Database& db){
                 // create each response
                 string id = sub_n.attribute("id").value();
                 float num = sub_n.text().as_float();
-                if (db.createPosition(sym, id, num)){
+                if (db->createPosition(sym, id, num)){
                     pugi::xml_node po = outer.append_child("created");
                     po.append_attribute("sym").set_value(sym.c_str());
                     po.append_attribute("id").set_value(id.c_str());
@@ -57,14 +57,14 @@ string do_create(pugi::xml_document& doc, Database& db){
     return ss.str();
 }
 
-string do_transactions(pugi::xml_document& doc, Database& db){
+string do_transactions(pugi::xml_document& doc, Database* db){
     // xml_doc to store response
     pugi::xml_document result;
     pugi::xml_node outer = result.append_child("result");
     string account_id = doc.child("transactions").attribute("id").value();
     cout<<account_id<<endl;
     // if account do not exist, return xml with error message
-    if (!db.checkAccountValid(account_id)){
+    if (!db->checkAccountValid(account_id)){
         outer.append_child("error").text().set("Invalid account ID");
         stringstream ss;
         result.save(ss);
@@ -84,14 +84,14 @@ string do_transactions(pugi::xml_document& doc, Database& db){
             error.append_attribute("limit") = price;
             // if its a buy order
             if (amount > 0){
-                if (!db.checkBalance(account_id, amount, price)){
+                if (!db->checkBalance(account_id, amount, price)){
                     error.append_child(pugi::node_pcdata).text().set("Unable to buy: insefficient funds");
                     continue;
                 }
             }
             // if its a sell order
             else if (amount < 0){
-                if (!db.checkAmount(account_id, amount, sym)){
+                if (!db->checkAmount(account_id, amount, sym)){
                     error.append_child(pugi::node_pcdata).text().set("Unable to sell: insefficient shares");
                     continue;
                 }
@@ -102,7 +102,7 @@ string do_transactions(pugi::xml_document& doc, Database& db){
                 continue;
             }
             // create order, get correspond order id
-            int order_id = db.createOrder(sym, account_id, amount, price);
+            int order_id = db->createOrder(sym, account_id, amount, price);
             if (order_id == -1){
                 error.append_child(pugi::node_pcdata).text().set("Error creating order");
                 continue;
@@ -123,7 +123,7 @@ string do_transactions(pugi::xml_document& doc, Database& db){
             vector<CancelOrder> notExcecuted;
             vector<ExecutedOrder> Executed;
             // do query on database and fill up these vectors, traverse them to build result xml
-            if (db.query(account_id, transaction_id, Open, notExcecuted, Executed)){
+            if (db->query(account_id, transaction_id, Open, notExcecuted, Executed)){
                 for (OpenOrder opn: Open){
                     status.append_child("open").append_attribute("shares").set_value(opn.shares);
                 }
@@ -154,7 +154,7 @@ string do_transactions(pugi::xml_document& doc, Database& db){
             vector<CancelOrder> notExcecuted;
             vector<ExecutedOrder> Executed;
             // do query on database and fill up these vectors, traverse them to build result xml
-            if (db.cancel(account_id, transaction_id, notExcecuted, Executed)){
+            if (db->cancel(account_id, transaction_id, notExcecuted, Executed)){
                 for (CancelOrder can: notExcecuted){
                     pugi::xml_node notEx = canceled.append_child("canceled");
                     notEx.append_attribute("shares") = can.shares;
