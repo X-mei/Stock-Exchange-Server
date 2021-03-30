@@ -64,7 +64,7 @@ string do_transactions(pugi::xml_document& doc, Database& db){
     pugi::xml_document result;
     pugi::xml_node outer = result.append_child("result");
     string account_id = doc.child("transactions").attribute("id").value();
-    cout<<account_id<<endl;
+    //cout<<account_id<<endl;
     // if account do not exist, return xml with error message
     if (!db.checkAccountValid(account_id)){
         outer.append_child("error").text().set("Invalid account ID");

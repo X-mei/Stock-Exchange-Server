@@ -259,7 +259,7 @@ bool Database::executeOrder(string accountId, string transId, string symName, fl
     bool marker = false;
     pqxx::work W(*C);
     while(marker != true){
-        cout << "marker = " << marker << endl;
+        //cout << "marker = " << marker << endl;
         try{
             if(amount > 0){//for buy, amount > 0
                 //cout << "in execute buy order" << endl;
@@ -615,7 +615,7 @@ bool Database::query(string accountId, string transId, vector<OpenOrder> &queryO
             //N4.commit();
             pqxx::result::const_iterator it = R4.begin();
             if (it == R4.end()){
-                cout<<"Hi"<<endl;
+                //cout<<"Hi"<<endl;
                 W.commit();
                 marker = true;
                 return false;
@@ -701,8 +701,8 @@ bool Database::checkBalance(string accountId, float amount, float limits){
                 marker = true;
                 return false;
             }
-            cout<<"Balance"<<endl;
-            cout<<amount * limits<<endl;
+            //cout<<"Balance"<<endl;
+            //cout<<amount * limits<<endl;
             float currentBalance= c[0].as<float>();
             if(currentBalance >= amount * limits){
                 string update_balance_sql = "UPDATE ACCOUNT set BALANCE=BALANCE-(" + to_string(amount*limits) + \
@@ -713,7 +713,9 @@ bool Database::checkBalance(string accountId, float amount, float limits){
                 marker = true;
                 return true;
             }
-        }catch (const std::exception &e) {
+        marker = true;
+        }
+        catch (const std::exception &e) {
             cerr << e.what() << std::endl;
             W.abort();
         }
@@ -726,6 +728,7 @@ bool Database::checkAmount(string accountId, float amount, string symName){
     pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
+        //cout << "marker in checkAmount = " << marker << endl;
             try{
             string check_amount_sql = "SELECT AMOUNT FROM POSITIONS WHERE ACCOUNT_ID = " + accountId + \
                                         " AND SYM='" + symName +"';";
@@ -739,8 +742,8 @@ bool Database::checkAmount(string accountId, float amount, string symName){
                 return false;
             }
             float currentAmount= c[0].as<float>();
-            cout<<"Amount"<<endl;
-            cout<<amount<<endl;
+            //cout<<"Amount1"<<endl;
+            //cout<<amount<<endl;
             if(currentAmount + amount >= 0){
                 string update_amount_sql = "UPDATE POSITIONS set AMOUNT=AMOUNT+(" + to_string(amount) + \
                                     ") WHERE ACCOUNT_ID=" + accountId + " AND SYM='" + symName +"';";
@@ -750,7 +753,9 @@ bool Database::checkAmount(string accountId, float amount, string symName){
                 marker = true;
                 return true;
             }
-        }catch (const std::exception &e) {
+        marker = true; 
+        }
+        catch (const std::exception &e) {
             cerr << e.what() << std::endl;
             W.abort();
         }
