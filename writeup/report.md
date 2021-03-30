@@ -21,7 +21,11 @@ The exchange machine engine can create accounts, positions and orders The opened
 4. An order can be executed partially.
 5. An order can be cancelled, and the user will get the information of that order including the open and executed part. 
 
-For testing the functionality, we create +++++++++++++++++++++++++
+In order to test the functionality, we imitated the example given in the pdf and created several xml file that would carry out these steps, all of which we have test case covered:
+1. Adding account and positions (creating a existing account is a error case, creating a existing position will add to the old one).
+2. Adding orders (creating orders deduct corresponding amount of money or shares depending the type of order `Buy/Sell`).
+3. Carry out the transaction (this step automatically execute after the previous step, but remain idle is no doable transactions; if the balance carried in the order is superflous, it is returned to the order owner).
+4. Do query or cancel (query will return all the transaction marked by the given account id and order id, even if the order is split when pairing; cancel will delete the trasaction that is not done, and return the order detail if the transaction already happened)
 
 
 
