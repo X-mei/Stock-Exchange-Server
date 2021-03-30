@@ -1,5 +1,5 @@
 #include "common.h"
-#define SERVER_HOSTNAME "vcm-18235.vm.duke.edu"
+#define SERVER_HOSTNAME "vcm-18172.vm.duke.edu"
 #define SERVER_PORT "12345"
 #define MAX_THREAD  1000
 #define BUFF_SIZE 10240

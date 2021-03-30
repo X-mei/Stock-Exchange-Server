@@ -7,14 +7,14 @@ services:
 
     volumes:
       - data-volume:/var/lib/postgresql/data
-      - ./initDB.sh:/docker-entrypoint-initdb.d/initDB.sh
+      - ./initDB.sql:/docker-entrypoint-initdb.d/initDB.sql
       
     expose:
       - "5432"
     ports:
       - "54321:5432"
     environment:
-        POSTGRES_DB: user-auth
+        POSTGRES_DB: postgres
         POSTGRES_HOST_AUTH_METHOD: trust
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
@@ -28,7 +28,10 @@ services:
       - "12345"
     ports:
       - "12345:12345"
+    links:
+      - db
     depends_on:
       - db
+      
 volumes:
      data-volume:

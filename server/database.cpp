@@ -4,11 +4,11 @@ using namespace std;
 Database::Database(){
     try{
         //#if DOCKER
-        //C = new pqxx::connection("dbname=exchangedb user=postgres password=postgres host=db port=5432");
+        C = new pqxx::connection("dbname=postgres user=postgres password=postgres host=db port=5432");
         //#else
         //C = new pqxx::connection("dbname=exchangedb user=postgres password=Gemeihong1 hostaddr=127.0.0.1 port=5432");
         //#endif
-        C = new pqxx::connection("dbname=exchangedb user=postgres password=Z hostaddr=127.0.0.1 port=5432");
+        //C = new pqxx::connection("dbname=exchangedb user=postgres password=Z hostaddr=127.0.0.1 port=5432");
         //this->C = temp;
 
         if (C->is_open()) {
