@@ -1,4 +1,5 @@
 #include "server.h"
+#include "threadpool.h"
 
 Server::Server(){
     memset(&host_info, 0, sizeof(host_info));
@@ -128,13 +129,21 @@ void Server::recvRequest(int new_socket_fd){
 }
 
 void Server::runServer(){
+    
+  // ctpl::thread_pool pool(5);
+    ThreadPool pool{50};
+    
     // call new thread to handle request.
     while (true){
         cout << "Waiting for connections." << endl;
         addr_size = sizeof(their_addr);
         int new_socket_fd = accept(socket_fd, (struct sockaddr *)&their_addr, &addr_size);
-        std::thread trd(&Server::recvRequest, this, new_socket_fd);
-        trd.detach();
+        
+        pool.enqueue(&Server::recvRequest, this, new_socket_fd);
+       
+        //std::thread trd(&Server::recvRequest, this, new_socket_fd);
+        //trd.detach();
+       
     }
     close(socket_fd);
 }

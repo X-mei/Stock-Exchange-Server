@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "server.h"
 #include "database.h"
+#include "threadpool.h"
 
 // main function
 int main() {
