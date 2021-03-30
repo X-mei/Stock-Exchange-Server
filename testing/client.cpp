@@ -1,7 +1,7 @@
 #include "common.h"
 #define SERVER_HOSTNAME "vcm-18172.vm.duke.edu"
 #define SERVER_PORT "12345"
-#define MAX_THREAD 5
+#define MAX_THREAD 100
 #define BUFF_SIZE 10240
 
 void handler(void * fname){
@@ -51,6 +51,8 @@ void handler(void * fname){
     request = prefix + request;
     len = send(server_fd, request.c_str(), request.length(), 0);
     stat = recv(server_fd, buffer, BUFF_SIZE, 0);
+    free(host_info_list);
+    close(server_fd);
     cout<<buffer<<endl;
 }
 
@@ -63,7 +65,7 @@ int main(int argc, char** argv){
     for (int i=0; i<MAX_THREAD; i++){
         thread th(handler, argv[1]);
         threads.push_back(move(th));
-        usleep(5000);
+        usleep(500);
     }
     cout << threads.size() << endl;
     //handler(argv[1]);
