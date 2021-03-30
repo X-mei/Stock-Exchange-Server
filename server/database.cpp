@@ -148,7 +148,7 @@ bool Database::createAccount(string accountId, float balance){
         //W.exec(create_new_accoun_sql);
         N.exec(create_new_accoun_sql);
         N.commit();
-        cout << "create an account" << endl;
+        //cout << "create an account" << endl;
         marker = true;
         return true;
         }
@@ -161,7 +161,7 @@ bool Database::createAccount(string accountId, float balance){
 
 bool Database::createPosition(string symName, string accountId, float amount){
     bool marker = false;
-     pqxx::work N(*C);
+    pqxx::work N(*C);
     while(marker != true){
         try{
             string check_postion_owner_valid_sql = "SELECT ACCOUNT_ID FROM ACCOUNT WHERE ACCOUNT_ID = " + accountId + ";";
@@ -170,7 +170,7 @@ bool Database::createPosition(string symName, string accountId, float amount){
             pqxx::result::const_iterator c1 = R1.begin();
             //if position's account does not exist, return false 
             if( c1 == R1.end()){
-                cout << " position's account does not exist" << endl;
+                //cout << " position's account does not exist" << endl;
                 marker = true;
                 return false;
             }
@@ -188,7 +188,7 @@ bool Database::createPosition(string symName, string accountId, float amount){
                 //pqxx::work W(*C);
                 N.exec(create_pos_sql);           
                 N.commit();
-                cout << " create a position" << endl;
+                //cout << " create a position" << endl;
                 marker = true;
                 return true;
             }
@@ -201,7 +201,7 @@ bool Database::createPosition(string symName, string accountId, float amount){
                 //pqxx::work W(*C);
                 N.exec(update_pos_sql);
                 N.commit();
-                cout << " update a position" << endl;
+                //cout << " update a position" << endl;
                 marker = true;
                 return true;
             }

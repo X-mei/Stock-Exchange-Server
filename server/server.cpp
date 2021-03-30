@@ -40,7 +40,7 @@ Server::Server(){
     free(host_info_list);
 }
 
-vector<char> Server::recv_vector(int& new_socket_fd){
+vector<char> Server::recv_vector(int new_socket_fd){
     vector<char> buff(BUFF_SIZE);
     int data_len = recv(new_socket_fd, &(buff.data()[0]), BUFF_SIZE, 0);
     int index = data_len;
@@ -84,7 +84,7 @@ vector<char> Server::recv_vector(int& new_socket_fd){
     
 }
 
-void Server::send_back(int& new_socket_fd, string& response) {
+void Server::send_back(int new_socket_fd, string& response) {
   cout << "start sending back" << endl;
   size_t sent = 0;
   vector<char> res(response.begin(), response.end());
@@ -100,11 +100,13 @@ void Server::send_back(int& new_socket_fd, string& response) {
   return;
 }
 
-void Server::recvRequest(int& new_socket_fd){
+void Server::recvRequest(int new_socket_fd){
     Database db;
     vector<char> buffer = recv_vector(new_socket_fd);
     pugi::xml_document doc;
+    cout << "Before load" <<endl;
     pugi::xml_parse_result res = doc.load_string(buffer.data());
+    cout << "After load" <<endl;
     string response;
     if (buffer.empty() || !res){
         cout << "Error parsing xml" << endl;
@@ -120,7 +122,6 @@ void Server::recvRequest(int& new_socket_fd){
         cout << "XML syntax not supported" << endl;
         response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error>XML tag not supported</error>\n";
     }
-
     send_back(new_socket_fd, response);
     close(new_socket_fd);
     return;
@@ -132,7 +133,7 @@ void Server::runServer(){
         cout << "Waiting for connections." << endl;
         addr_size = sizeof(their_addr);
         int new_socket_fd = accept(socket_fd, (struct sockaddr *)&their_addr, &addr_size);
-        std::thread trd(&Server::recvRequest, this, ref(new_socket_fd));
+        std::thread trd(&Server::recvRequest, this, new_socket_fd);
         trd.detach();
     }
     close(socket_fd);

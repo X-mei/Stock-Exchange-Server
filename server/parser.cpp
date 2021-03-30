@@ -1,7 +1,7 @@
 #include "parser.h"
 
 string do_create(pugi::xml_document& doc, Database& db){
-    // lock_guard<mutex> lck (mtx);
+    //lock_guard<mutex> lck (mtx);
     // xml_doc to store response
     pugi::xml_document result;
     pugi::xml_node outer = result.append_child("result");
@@ -59,7 +59,7 @@ string do_create(pugi::xml_document& doc, Database& db){
 }
 
 string do_transactions(pugi::xml_document& doc, Database& db){
-    // lock_guard<mutex> lck (mtx);
+    //lock_guard<mutex> lck (mtx);
     // xml_doc to store response
     pugi::xml_document result;
     pugi::xml_node outer = result.append_child("result");

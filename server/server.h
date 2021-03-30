@@ -13,9 +13,9 @@ private:
     struct addrinfo *host_info_list;
     struct sockaddr_storage their_addr;
     socklen_t addr_size;
-    void recvRequest(int& new_socket_fd);
-    vector<char> recv_vector(int& new_socket_fd);
-    void send_back(int& new_socket_fd, string &response);
+    void recvRequest(int new_socket_fd);
+    vector<char> recv_vector(int new_socket_fd);
+    void send_back(int new_socket_fd, string &response);
 public:
     Server();
     void runServer();
