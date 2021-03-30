@@ -259,6 +259,7 @@ bool Database::executeOrder(string accountId, string transId, string symName, fl
     bool marker = false;
     pqxx::work W(*C);
     while(marker != true){
+        cout << "marker = " << marker << endl;
         try{
             if(amount > 0){//for buy, amount > 0
                 //cout << "in execute buy order" << endl;
