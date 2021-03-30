@@ -52,10 +52,10 @@ vector<char> Server::recv_vector(int new_socket_fd){
         return {};
     }
 
-    cout << "=========================" << endl;
-    cout << "starting receiving" << endl;
-    cout << "data_len: " << data_len << endl;
-    cout << "total_len: " << total_len << endl;
+    //cout << "=========================" << endl;
+    //cout << "starting receiving" << endl;
+    //cout << "data_len: " << data_len << endl;
+    //cout << "total_len: " << total_len << endl;
     if (data_len >= BUFF_SIZE) {
         while (data_len != 0) {
             buff.resize(index + 1024);
@@ -70,11 +70,11 @@ vector<char> Server::recv_vector(int new_socket_fd){
             if (string(buff.begin(), buff.end()).find("</create>") != string::npos) {
                 break;
             }
-        cout << buff.data() << endl;
+        //cout << buff.data() << endl;
         }
     }
 
-    cout << "done receiving" << endl;
+    //cout << "done receiving" << endl;
     // get rid of byte len at the beginning
     while (isdigit(*buff.begin())) {
         buff.erase(buff.begin());
@@ -85,7 +85,7 @@ vector<char> Server::recv_vector(int new_socket_fd){
 }
 
 void Server::send_back(int new_socket_fd, string& response) {
-  cout << "start sending back" << endl;
+  //cout << "start sending back" << endl;
   size_t sent = 0;
   vector<char> res(response.begin(), response.end());
   while (1) {
@@ -96,7 +96,7 @@ void Server::send_back(int new_socket_fd, string& response) {
       break;
     }
   }
-  cout << "done sending back" << endl;
+  //cout << "done sending back" << endl;
   return;
 }
 
@@ -104,12 +104,12 @@ void Server::recvRequest(int new_socket_fd){
     Database db;
     vector<char> buffer = recv_vector(new_socket_fd);
     pugi::xml_document doc;
-    cout << "Before load" <<endl;
+    //cout << "Before load" <<endl;
     pugi::xml_parse_result res = doc.load_string(buffer.data());
-    cout << "After load" <<endl;
+    //cout << "After load" <<endl;
     string response;
     if (buffer.empty() || !res){
-        cout << "Error parsing xml" << endl;
+        //cout << "Error parsing xml" << endl;
         response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error>Illegal XML Format</error>\n";
     }
     if (doc.child("create")){
@@ -119,7 +119,7 @@ void Server::recvRequest(int new_socket_fd){
         response = do_transactions(doc, db);
     }
     else {
-        cout << "XML syntax not supported" << endl;
+        //cout << "XML syntax not supported" << endl;
         response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error>XML tag not supported</error>\n";
     }
     send_back(new_socket_fd, response);

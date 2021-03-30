@@ -6,15 +6,15 @@ Database::Database(){
         //#if DOCKER
         //C = new pqxx::connection("dbname=exchangedb user=postgres password=postgres host=db port=5432");
         //#else
-        C = new pqxx::connection("dbname=exchangedb user=postgres password=Gemeihong1 hostaddr=127.0.0.1 port=5432");
+        //C = new pqxx::connection("dbname=exchangedb user=postgres password=Gemeihong1 hostaddr=127.0.0.1 port=5432");
         //#endif
-        //C = new pqxx::connection("dbname=exchangedb user=postgres password=Z hostaddr=127.0.0.1 port=5432");
+        C = new pqxx::connection("dbname=exchangedb user=postgres password=Z hostaddr=127.0.0.1 port=5432");
         //this->C = temp;
 
         if (C->is_open()) {
-            cout << "Opened database successfully: " << C->dbname() << endl;
+            //cout << "Opened database successfully: " << C->dbname() << endl;
         } else {
-            cout << "Can't open database" << endl;
+            //cout << "Can't open database" << endl;
             return;
         }
     }
@@ -33,9 +33,9 @@ Database::~Database(){
 //         //this->C = temp;
 //       //C = new pqxx::connection("dbname=testdb user=postgres password=cohondob, hostaddr=127.0.0.1 port=5432");
 //         if (C->is_open()) {
-//             cout << "Opened database successfully: " << C.dbname() << endl;
+//             //cout << "Opened database successfully: " << C.dbname() << endl;
 //         } else {
-//             cout << "Can't open database" << endl;
+//             //cout << "Can't open database" << endl;
 //             return;
 //         }
 //     }
@@ -51,7 +51,7 @@ void Database::clearTables(){
         pqxx::work W(*C);
         W.exec(drop_table_sql);
         W.commit();
-        cout << "Drop all previous tables successfully" << endl;
+        //cout << "Drop all previous tables successfully" << endl;
     }
     catch(const exception &e){
         cerr << e.what() << endl;
@@ -66,7 +66,7 @@ void Database::createTables() {
     "ACCOUNT_ID INT PRIMARY KEY NOT NULL UNIQUE,"\
     "BALANCE FLOAT NOT NULL);";
     W.exec(account_sql);
-    //cout << "create ACCOUNT successfully" << endl;
+    ////cout << "create ACCOUNT successfully" << endl;
   
     std::string position_sql =
     "CREATE TABLE POSITIONS("\
@@ -76,7 +76,7 @@ void Database::createTables() {
     "SYM VARCHAR(50) NOT NULL,"\
     "AMOUNT FLOAT NOT NULL);";
     W.exec(position_sql);
-    //cout << "create POSITIONS successfully" << endl;
+    ////cout << "create POSITIONS successfully" << endl;
   
     std::string order_sql =
     "CREATE TABLE ORDER_OPEN("\
@@ -88,7 +88,7 @@ void Database::createTables() {
     "LIMITS FLOAT NOT NULL,"\
     "TIME BIGINT NOT NULL);";
     W.exec(order_sql);
-    //cout << "create ORDER_OPEN successfully" << endl;
+    ////cout << "create ORDER_OPEN successfully" << endl;
   
     std::string execution_sql =
     "CREATE TABLE ORDER_EXECUTION("\
@@ -107,7 +107,7 @@ void Database::createTables() {
     "AMOUNT FLOAT NOT NULL,"\
     "TIME BIGINT NOT NULL);";
     W.exec(execution_sql);
-    //cout << "create ORDER_EXECUTION successfully" << endl;
+    ////cout << "create ORDER_EXECUTION successfully" << endl;
 
     std::string cancel_sql =
     "CREATE TABLE ORDER_CANCEL("\
@@ -119,10 +119,10 @@ void Database::createTables() {
     "AMOUNT FLOAT NOT NULL,"\
     "TIME BIGINT NOT NULL);";
     W.exec(cancel_sql);
-    //cout << "create ORDER_CANCEL successfully" << endl;
+    ////cout << "create ORDER_CANCEL successfully" << endl;
 
     W.commit();
-    cout << "create all tables successfully" << endl;
+    //cout << "create all tables successfully" << endl;
 }
 
 bool Database::createAccount(string accountId, float balance){
@@ -148,7 +148,7 @@ bool Database::createAccount(string accountId, float balance){
         //W.exec(create_new_accoun_sql);
         N.exec(create_new_accoun_sql);
         N.commit();
-        //cout << "create an account" << endl;
+        ////cout << "create an account" << endl;
         marker = true;
         return true;
         }
@@ -170,7 +170,7 @@ bool Database::createPosition(string symName, string accountId, float amount){
             pqxx::result::const_iterator c1 = R1.begin();
             //if position's account does not exist, return false 
             if( c1 == R1.end()){
-                //cout << " position's account does not exist" << endl;
+                ////cout << " position's account does not exist" << endl;
                 marker = true;
                 return false;
             }
@@ -181,27 +181,27 @@ bool Database::createPosition(string symName, string accountId, float amount){
             pqxx::result::const_iterator c2 = R2.begin();
             //if position does not exist, create a position, return true 
             if( c2 == R2.end()){
-                //cout << " in not exist "  << endl;
+                ////cout << " in not exist "  << endl;
                 string create_pos_sql = "INSERT INTO POSITIONS (ACCOUNT_ID, SYM, AMOUNT) "		\
                                         "VALUES (" + accountId + ", '" + symName + "', " + to_string(amount) + ");";
                 //N2.commit();
                 //pqxx::work W(*C);
                 N.exec(create_pos_sql);           
                 N.commit();
-                //cout << " create a position" << endl;
+                ////cout << " create a position" << endl;
                 marker = true;
                 return true;
             }
             //exist, then update and return true
             else{
-                //cout << " CORIGINAL AMOUNT " << c2[0].as<int>() << endl;
+                ////cout << " CORIGINAL AMOUNT " << c2[0].as<int>() << endl;
                 //int updateAmount = c2[0].as<int>() + amount;
                 string update_pos_sql = "UPDATE POSITIONS set AMOUNT=AMOUNT+" + to_string(amount) + " WHERE ACCOUNT_ID=" + accountId + " AND SYM='" + symName + "';";
                 //N2.commit();
                 //pqxx::work W(*C);
                 N.exec(update_pos_sql);
                 N.commit();
-                //cout << " update a position" << endl;
+                ////cout << " update a position" << endl;
                 marker = true;
                 return true;
             }
@@ -242,7 +242,7 @@ int Database::createOrder(string symName, string accountId, float amount, float 
             W.commit();
             pqxx::result::const_iterator c = R.begin();
             int trans_id = c[0].as<int>();
-            cout << " create open order No." << trans_id << endl;
+            //cout << " create open order No." << trans_id << endl;
             executeOrder(accountId, to_string(trans_id), symName, amount, limit, currTime);
             marker = true;
             return trans_id;
@@ -261,7 +261,7 @@ bool Database::executeOrder(string accountId, string transId, string symName, fl
     while(marker != true){
         try{
             if(amount > 0){//for buy, amount > 0
-                cout << "in execute buy order" << endl;
+                //cout << "in execute buy order" << endl;
                 string find_match_sell_sql = "SELECT id, ACCOUNT_ID, AMOUNT, LIMITS, TIME from ORDER_OPEN WHERE "\
                                         "AMOUNT<0 AND LIMITS<=" + to_string(limit) + " AND SYM='" + symName + "' AND ACCOUNT_ID!=" + accountId  + " ORDER BY LIMITS ASC, TIME ASC;";
                 //pqxx::nontransaction N1(*C);
@@ -271,9 +271,9 @@ bool Database::executeOrder(string accountId, string transId, string symName, fl
                 float restBuyAmount = amount;
                 //bool buyMarker = true;
                 for(pqxx::result::const_iterator c = R1.begin(); c != R1.end(); ++c){
-                    //cout << "in for" << endl;
+                    ////cout << "in for" << endl;
                     if(restBuyAmount <= 0){ //this buy order is all processed
-                        cout << "this buy order is all processed" << endl;
+                        //cout << "this buy order is all processed" << endl;
                         break;
                     }
                     string sellId = c[0].as<string>();
@@ -341,7 +341,7 @@ bool Database::executeOrder(string accountId, string transId, string symName, fl
                 }
             }
             else if(amount < 0){//for sell, amount > 0
-                cout << "in execute sell order" << endl;
+                //cout << "in execute sell order" << endl;
                 string find_match_buy_sql = "SELECT id, ACCOUNT_ID, AMOUNT, LIMITS, TIME from ORDER_OPEN WHERE "\
                                         "AMOUNT>0 AND LIMITS>=" + to_string(limit) + " AND SYM='" + symName + "' AND ACCOUNT_ID!=" + accountId  + " ORDER BY LIMITS DESC, TIME ASC;";
                 //pqxx::nontransaction N1(*C);
@@ -351,13 +351,13 @@ bool Database::executeOrder(string accountId, string transId, string symName, fl
                 float restSellAmount = amount;
                 //bool buyMarker = true;
                 for(pqxx::result::const_iterator c = R1.begin(); c != R1.end(); ++c){
-                    cout << "in for" << endl;
+                    //cout << "in for" << endl;
                     if(restSellAmount >= 0){ //this buy order is all processed
-                        cout << "this buy order is all processed" << endl;
+                        //cout << "this buy order is all processed" << endl;
                         break;
                     }
                     string buyId = c[0].as<string>();
-                    cout << "buyId: " << buyId << endl;
+                    //cout << "buyId: " << buyId << endl;
                     string buyerAccountId = c[1].as<string>();
                     float buyAmount = c[2].as<float>();
                     float buyLimit = c[3].as<float>();
@@ -430,7 +430,7 @@ bool Database::executeOrder(string accountId, string transId, string symName, fl
 }
 
 void Database::updateSingleOrder(string accountId, string transId, string symName, float amount, float limit, time_t orderTime){
-    cout <<"in update an order" << endl;
+    //cout <<"in update an order" << endl;
     pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
@@ -451,7 +451,7 @@ void Database::updateSingleOrder(string accountId, string transId, string symNam
 }
 
 void Database::deleteSingleOrder(string accountId, string transId, string symName, float limit, time_t orderTime){
-    cout <<"in delete an order while it is fully executed" << endl;
+    //cout <<"in delete an order while it is fully executed" << endl;
     pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
@@ -472,7 +472,7 @@ void Database::deleteSingleOrder(string accountId, string transId, string symNam
 
 //process two matched order, add in to execution table
 void Database::processSingleTrade(string buyAccountId, string sellAccountId, string buyTransId, string sellTransId, string symName, float amount, float price, float processAmount, float processTotal){
-    cout << "in process single trade" << endl;
+    //cout << "in process single trade" << endl;
     pqxx::work W(*C);
     bool marker = false;
     while(marker != true){
@@ -487,8 +487,8 @@ void Database::processSingleTrade(string buyAccountId, string sellAccountId, str
                 //pqxx::work W1(*C);
                 W.exec(creat_execution_order_sql);
                 //W1.commit();
-                cout << "total = " << amount * price<<endl;
-                cout << "in update positions sell" << endl;
+                //cout << "total = " << amount * price<<endl;
+                //cout << "in update positions sell" << endl;
                 string seller_update_position_sql = "UPDATE POSITIONS set AMOUNT=AMOUNT+(" + to_string(processAmount) + \
                                     ") WHERE ACCOUNT_ID=" + sellAccountId + " AND SYM='" + symName +"';";
                 string seller_update_account_sql = "UPDATE ACCOUNT set BALANCE=BALANCE-(" + to_string(processTotal) + \
@@ -512,8 +512,8 @@ void Database::processSingleTrade(string buyAccountId, string sellAccountId, str
                 //pqxx::work W1(*C);
                 W.exec(creat_execution_order_sql);
                 //W1.commit();
-                cout << "total = " << amount * price<<endl;
-                cout << "in update positions buy" << endl;
+                //cout << "total = " << amount * price<<endl;
+                //cout << "in update positions buy" << endl;
                 string buyer_update_position_sql = "UPDATE POSITIONS set AMOUNT=AMOUNT+(" + to_string(processAmount) + \
                                     ") WHERE ACCOUNT_ID=" + buyAccountId + " AND SYM='" + symName +"';";
                 string buyer_update_account_sql = "UPDATE ACCOUNT set BALANCE=BALANCE-(" + to_string(processTotal) + \
@@ -577,7 +577,7 @@ bool Database::cancel(string accountId, string transId, vector<CancelOrder> &can
                 W.exec(add_cancel_from_open_order_sql);
                 W.exec(delete_cancel_from_open_order_sql);
                 //W.commit();
-                cout << " cancel an open order" << endl;
+                //cout << " cancel an open order" << endl;
                 //return true;
             }
             //search in execution order and find same trans id executed order
@@ -590,7 +590,7 @@ bool Database::cancel(string accountId, string transId, vector<CancelOrder> &can
                 float cancelExecutedShare = c2[1].as<float>();
                 time_t cancelExecutedTime = c2[2].as<time_t>();
                 cancelExecutedSet.push_back(ExecutedOrder(cancelExcutedPrice, cancelExecutedShare, cancelExecutedTime));
-                cout << "find a execute partial order when cancel it" << endl;
+                //cout << "find a execute partial order when cancel it" << endl;
             }
             marker = true;
             return true;   
@@ -626,7 +626,7 @@ bool Database::query(string accountId, string transId, vector<OpenOrder> &queryO
             for(pqxx::result::const_iterator c = R1.begin(); c != R1.end(); ++c){
                 float queryOpenAmount= c[0].as<float>();
                 queryOpenSet.push_back(OpenOrder(queryOpenAmount));
-                cout << "find an open order when query" << endl;
+                //cout << "find an open order when query" << endl;
             }
             string query_cancel_order_find_sql = "SELECT AMOUNT, TIME from ORDER_CANCEL WHERE ACCOUNT_ID = " + accountId + " AND id = " + transId + ";" ;
             //pqxx::nontransaction N2(*C);
@@ -636,7 +636,7 @@ bool Database::query(string accountId, string transId, vector<OpenOrder> &queryO
                 float queryCancelAmount= c[0].as<float>();
                 time_t queryCancelTime = c[1].as<time_t>();
                 queryCancelSet.push_back(CancelOrder(queryCancelAmount, queryCancelTime));
-                cout << "find a cancel order when query" << endl;
+                //cout << "find a cancel order when query" << endl;
             }                                                                                     
             //string query_execute_order_find_sql = "SELECT PRICE, AMOUNT, TIME from ORDER_EXECUTION WHERE (BUYER_ID = " + accountId + " OR SELLER_ID = " + accountId + ")"
                                                                                                 // + "AND (BUY_ID = " + transId + " OR SELL_ID = " + transId + ");";
@@ -649,7 +649,7 @@ bool Database::query(string accountId, string transId, vector<OpenOrder> &queryO
                 float queryExcuteShare = c[1].as<float>();
                 time_t queryExcuteTime = c[2].as<time_t>();
                 queryExecutedSet.push_back(ExecutedOrder(queryExcutePrice, queryExcuteShare, queryExcuteTime));
-                cout << "find a execute order when query" << endl;
+                //cout << "find a execute order when query" << endl;
             } 
             marker = true;
             return true;                                                                                    
