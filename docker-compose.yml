@@ -21,11 +21,11 @@ services:
 
   server:
     build: ./server
+
     command: ./server
     volumes:
       - ./server:/code
-    expose:
-      - "12345"
+    
     ports:
       - "12345:12345"
     links:

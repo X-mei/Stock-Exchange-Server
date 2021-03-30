@@ -4,3 +4,4 @@ RUN apt-get update && apt-get install -y sudo netcat g++ make libpqxx-dev libpq-
 RUN apt-get upgrade libstdc++6
 WORKDIR /code
 ADD . /code
+ENTRYPOINT ["/bin/sh","./run.sh"]
