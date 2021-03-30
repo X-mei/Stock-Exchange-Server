@@ -1,10 +1,12 @@
 #include "common.h"
 #define SERVER_HOSTNAME "vcm-18172.vm.duke.edu"
 #define SERVER_PORT "12345"
-#define MAX_THREAD 100
+#define MAX_THREAD 1000
 #define BUFF_SIZE 10240
 
-void handler(void * fname){
+void handler(void * fname, vector<float>& runTimes, int i){
+    clock_t start,end;
+    start = clock();
     char buffer[BUFF_SIZE];
     int server_fd;
     int stat;
@@ -53,7 +55,11 @@ void handler(void * fname){
     stat = recv(server_fd, buffer, BUFF_SIZE, 0);
     free(host_info_list);
     close(server_fd);
-    cout<<buffer<<endl;
+    //cout<<buffer<<endl;
+    float timeSpan = (float)(start-end)*1000/CLOCKS_PER_SEC;
+    runTimes[i] = timeSpan;
+    //cout << "Total time: " << timeSpan << endl;
+    end = clock();
 }
 
 int main(int argc, char** argv){
@@ -62,15 +68,17 @@ int main(int argc, char** argv){
         exit(EXIT_FAILURE);
     }
     vector<thread> threads;
+    vector<float> runTimes(MAX_THREAD);
     for (int i=0; i<MAX_THREAD; i++){
-        thread th(handler, argv[1]);
+        thread th(handler, argv[1], ref(runTimes), i);
         threads.push_back(move(th));
         usleep(500);
     }
-    cout << threads.size() << endl;
-    //handler(argv[1]);
     for (auto& t : threads){
         t.join();
+    }
+    for (int i=0; i<MAX_THREAD; i++){
+        cout << "Run time for thread " << i << ": " << runTimes[i] << endl;
     }
     return 0;
 }
