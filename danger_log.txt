@@ -1,0 +1,4 @@
+Danger log:
+Database:
+1. Duplicate balance creations of the same account cannot be accumulated, which means you can only create an accont and its balance for one time. If you try to do a large amount of order operations, you may have to set the balance at a high level amount to guarantee it is enough for all your operations. Otherwise the later processed operations will not be done due to the lack of balance.
+2. We choose int data type for most fields, and there will be a limit for them. The numbers of those fields cannot be out of int range. 
