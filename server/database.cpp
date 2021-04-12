@@ -4,9 +4,9 @@ using namespace std;
 Database::Database(){
     try{
         //#if DOCKER
-        C = new pqxx::connection("dbname=postgres user=postgres password=postgres host=db port=5432");
+        //C = new pqxx::connection("dbname=postgres user=postgres password=postgres host=db port=5432");
         //#else
-        //C = new pqxx::connection("dbname=exchangedb user=postgres password=Gemeihong1 hostaddr=127.0.0.1 port=5432");
+        C = new pqxx::connection("dbname=exchangedb user=postgres password=passw0rd hostaddr=127.0.0.1 port=5432");
         //#endif
         //C = new pqxx::connection("dbname=exchangedb user=postgres password=Z hostaddr=127.0.0.1 port=5432");
         //this->C = temp;
@@ -47,7 +47,7 @@ Database::~Database(){
 
 void Database::clearTables(){
     try{
-        string drop_table_sql = "DROP TABLE ACCOUNT, POSITIONS, ORDER_OPEN, ORDER_EXECUTION, ORDER_CANCEL;";
+        string drop_table_sql = "DROP TABLE IF EXISTS ACCOUNT, POSITIONS, ORDER_OPEN, ORDER_EXECUTION, ORDER_CANCEL;";
         pqxx::work W(*C);
         W.exec(drop_table_sql);
         W.commit();

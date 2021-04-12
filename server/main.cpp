@@ -18,7 +18,6 @@ int main() {
   db.createTables();
   Server sv;
   sv.runServer();
-
   // bool refresh;
   // cin >> refresh;
   // if (refresh){

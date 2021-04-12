@@ -139,10 +139,10 @@ void Server::runServer(){
         addr_size = sizeof(their_addr);
         int new_socket_fd = accept(socket_fd, (struct sockaddr *)&their_addr, &addr_size);
         
-        pool.enqueue(&Server::recvRequest, this, new_socket_fd);
+        //pool.enqueue(&Server::recvRequest, this, new_socket_fd);
        
-        //std::thread trd(&Server::recvRequest, this, new_socket_fd);
-        //trd.detach();
+        std::thread trd(&Server::recvRequest, this, new_socket_fd);
+        trd.detach();
        
     }
     close(socket_fd);
