@@ -87,6 +87,7 @@ vector<char> Server::recv_vector(int new_socket_fd){
 
 void Server::send_back(int new_socket_fd, string& response) {
   //cout << "start sending back" << endl;
+  cout<<response<<endl;
   size_t sent = 0;
   vector<char> res(response.begin(), response.end());
   while (1) {
@@ -97,7 +98,7 @@ void Server::send_back(int new_socket_fd, string& response) {
       break;
     }
   }
-  //cout << "done sending back" << endl;
+  cout << "done sending back" << endl;
   return;
 }
 
@@ -123,6 +124,8 @@ void Server::recvRequest(int new_socket_fd){
         //cout << "XML syntax not supported" << endl;
         response = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<error>XML tag not supported</error>\n";
     }
+    int len = response.size();
+    response = to_string(len)+"\n"+response;
     send_back(new_socket_fd, response);
     close(new_socket_fd);
     return;
@@ -138,11 +141,9 @@ void Server::runServer(){
         cout << "Waiting for connections." << endl;
         addr_size = sizeof(their_addr);
         int new_socket_fd = accept(socket_fd, (struct sockaddr *)&their_addr, &addr_size);
-        
-        //pool.enqueue(&Server::recvRequest, this, new_socket_fd);
-       
-        std::thread trd(&Server::recvRequest, this, new_socket_fd);
-        trd.detach();
+        pool.enqueue(&Server::recvRequest, this, new_socket_fd);
+        //std::thread trd(&Server::recvRequest, this, new_socket_fd);
+        //trd.detach();
        
     }
     close(socket_fd);

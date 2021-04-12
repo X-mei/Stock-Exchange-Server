@@ -4,7 +4,7 @@ string do_create(pugi::xml_document& doc, Database& db){
     lock_guard<mutex> lck (mtx);
     // xml_doc to store response
     pugi::xml_document result;
-    pugi::xml_node outer = result.append_child("result");
+    pugi::xml_node outer = result.append_child("results");
     // iterate through each child of create
     for (pugi::xml_node n: doc.child("create")){
         // to create account
@@ -62,7 +62,7 @@ string do_transactions(pugi::xml_document& doc, Database& db){
     lock_guard<mutex> lck (mtx);
     // xml_doc to store response
     pugi::xml_document result;
-    pugi::xml_node outer = result.append_child("result");
+    pugi::xml_node outer = result.append_child("results");
     string account_id = doc.child("transactions").attribute("id").value();
     //cout<<account_id<<endl;
     // if account do not exist, return xml with error message

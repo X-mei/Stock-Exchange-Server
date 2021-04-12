@@ -1,7 +1,7 @@
 #include "common.h"
 #define SERVER_HOSTNAME "127.0.0.1"
 #define SERVER_PORT "12345"
-#define MAX_THREAD  5
+#define MAX_THREAD  1
 #define BUFF_SIZE 10240
 
 void handler(void * fname, vector<float>& runTimes, int i){
