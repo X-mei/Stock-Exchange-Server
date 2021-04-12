@@ -1,5 +1,5 @@
 #include "common.h"
-#define SERVER_HOSTNAME "vcm-18172.vm.duke.edu"
+#define SERVER_HOSTNAME "127.0.0.1"
 #define SERVER_PORT "12345"
 #define MAX_THREAD  5
 #define BUFF_SIZE 10240
@@ -55,7 +55,7 @@ void handler(void * fname, vector<float>& runTimes, int i){
     stat = recv(server_fd, buffer, BUFF_SIZE, 0);
     free(host_info_list);
     close(server_fd);
-    cout<<buffer<<endl;
+    //cout<<buffer<<endl;
     float timeSpan = (float)(start-end)*1000/CLOCKS_PER_SEC;
     runTimes[i] = timeSpan;
     //cout << "Total time: " << timeSpan << endl;
