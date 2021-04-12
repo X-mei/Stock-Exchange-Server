@@ -7,7 +7,7 @@ services:
 
     volumes:
       - data-volume:/var/lib/postgresql/data
-      - ./initDB.sql:/docker-entrypoint-initdb.d/initDB.sql
+      - ./initDB.sql:/docker-entrypoint-initdb.d/
       
     expose:
       - "5432"
